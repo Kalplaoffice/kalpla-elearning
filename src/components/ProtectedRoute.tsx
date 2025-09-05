@@ -10,12 +10,14 @@ import Link from 'next/link';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   requiredRole?: 'Student' | 'Mentor' | 'Admin';
+  allowedRoles?: ('Student' | 'Mentor' | 'Admin')[];
   fallback?: React.ReactNode;
 }
 
 export default function ProtectedRoute({ 
   children, 
-  requiredRole, 
+  requiredRole,
+  allowedRoles,
   fallback 
 }: ProtectedRouteProps) {
   const { user, isAuthenticated, loading } = useAuth();
@@ -58,14 +60,19 @@ export default function ProtectedRoute({
     );
   }
 
-  if (requiredRole && user?.role !== requiredRole) {
+  // Check role-based access
+  const hasRequiredRole = requiredRole ? user?.role === requiredRole : true;
+  const hasAllowedRole = allowedRoles ? allowedRoles.includes(user?.role as any) : true;
+  
+  if (!hasRequiredRole || !hasAllowedRole) {
+    const requiredRoles = requiredRole ? [requiredRole] : allowedRoles || [];
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <Card className="w-full max-w-md">
           <CardHeader className="text-center">
             <CardTitle className="text-2xl font-bold text-gray-900">Access Denied</CardTitle>
             <CardDescription>
-              You don't have permission to access this page. Required role: {requiredRole}
+              You don't have permission to access this page. Required role: {requiredRoles.join(' or ')}
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center">
