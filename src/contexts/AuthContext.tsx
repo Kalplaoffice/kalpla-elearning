@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { signIn as amplifySignIn, signUp as amplifySignUp, signOut as amplifySignOut, getCurrentUser, confirmSignUp as amplifyConfirmSignUp, resendSignUpCode as amplifyResendSignUpCode, forgotPassword as amplifyForgotPassword, forgotPasswordSubmit as amplifyForgotPasswordSubmit } from 'aws-amplify/auth';
+import { signIn as amplifySignIn, signUp as amplifySignUp, signOut as amplifySignOut, getCurrentUser, confirmSignUp as amplifyConfirmSignUp, resendSignUpCode as amplifyResendSignUpCode, resetPassword as amplifyResetPassword, confirmResetPassword as amplifyConfirmResetPassword } from 'aws-amplify/auth';
 
 interface User {
   id: string;
@@ -180,7 +180,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const forgotPassword = async (email: string) => {
     setLoading(true);
     try {
-      await amplifyForgotPassword({
+      await amplifyResetPassword({
         username: email,
       });
     } catch (error: any) {
@@ -194,7 +194,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const resetPassword = async (email: string, code: string, newPassword: string) => {
     setLoading(true);
     try {
-      await amplifyForgotPasswordSubmit({
+      await amplifyConfirmResetPassword({
         username: email,
         confirmationCode: code,
         newPassword,
