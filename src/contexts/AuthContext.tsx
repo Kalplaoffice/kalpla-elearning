@@ -2,12 +2,15 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { signIn as amplifySignIn, signUp as amplifySignUp, signOut as amplifySignOut, getCurrentUser, confirmSignUp as amplifyConfirmSignUp, resendSignUpCode as amplifyResendSignUpCode, resetPassword as amplifyResetPassword, confirmResetPassword as amplifyConfirmResetPassword } from 'aws-amplify/auth';
+import { getUserRoleInfo, UserRoleInfo } from '@/lib/roleManager';
 
 interface User {
   id: string;
   email: string;
   name: string;
   role: 'Student' | 'Mentor' | 'Admin';
+  membershipType?: 'basic' | 'premium' | 'admin' | 'instructor';
+  subscriptionStatus?: 'active' | 'expired' | 'trial';
   avatarUrl?: string;
   isEmailVerified: boolean;
 }
@@ -54,26 +57,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Extract user attributes
         const email = currentUser.signInDetails?.loginId || currentUser.username || '';
         const name = currentUser.username || email.split('@')[0];
+        const userId = currentUser.userId;
         
-        // Get custom attributes from user attributes
-        const customRole = currentUser.attributes?.['custom:role'] as 'Student' | 'Mentor' | 'Admin' | 'Instructor' || 'Student';
-        const membershipType = currentUser.attributes?.['custom:membership_type'] || 'basic';
-        
-        // Determine role - map Instructor to Mentor for now, or create separate handling
-        let role: 'Student' | 'Mentor' | 'Admin' = 'Student';
-        if (customRole === 'Admin') {
-          role = 'Admin';
-        } else if (customRole === 'Instructor' || customRole === 'Mentor') {
-          role = 'Mentor';
-        } else {
-          role = 'Student';
-        }
+        // Get role information using the role manager
+        const roleInfo = getUserRoleInfo(email, userId);
 
         const userData: User = {
-          id: currentUser.userId,
+          id: userId,
           email,
           name,
-          role,
+          role: roleInfo.role,
+          membershipType: roleInfo.membershipType,
+          subscriptionStatus: roleInfo.subscriptionStatus,
           isEmailVerified: currentUser.attributes?.email_verified === 'true' || false,
         };
 
@@ -118,14 +113,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           userAttributes: {
             email,
             name,
-            'custom:role': role,
-            'custom:membership_type': membershipType,
-            'custom:subscription_status': 'active'
           },
         },
       });
 
       if (isSignUpComplete) {
+        // Store role information locally using the role manager
+        const roleInfo = getUserRoleInfo(email, userId);
+        
         // User is automatically signed in after successful signup
         await checkAuthState();
       } else {
