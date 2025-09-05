@@ -49,6 +49,10 @@ export default function Navbar() {
               About Us
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#FF804B] group-hover:w-full transition-all duration-200"></span>
             </Link>
+            <Link href="/create-test-users" className="text-gray-700 hover:text-[#FF804B] font-medium transition-colors duration-200 relative group">
+              🧪 Test Users
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#FF804B] group-hover:w-full transition-all duration-200"></span>
+            </Link>
             <Link href="/contact" className="text-gray-700 hover:text-[#FF804B] font-medium transition-colors duration-200 relative group">
               Contact
               <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#FF804B] group-hover:w-full transition-all duration-200"></span>

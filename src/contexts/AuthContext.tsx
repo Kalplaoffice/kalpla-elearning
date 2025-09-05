@@ -52,14 +52,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const currentUser = await getCurrentUser();
       if (currentUser) {
         // Extract user attributes
-        const attributes = currentUser.signInDetails?.loginId || currentUser.username;
-        const email = currentUser.signInDetails?.loginId || '';
+        const email = currentUser.signInDetails?.loginId || currentUser.username || '';
         const name = currentUser.username || email.split('@')[0];
         
-        // Determine role based on email or user groups
+        // Get custom attributes from user attributes
+        const customRole = currentUser.attributes?.['custom:role'] as 'Student' | 'Mentor' | 'Admin' | 'Instructor' || 'Student';
+        const membershipType = currentUser.attributes?.['custom:membership_type'] || 'basic';
+        
+        // Determine role - map Instructor to Mentor for now, or create separate handling
         let role: 'Student' | 'Mentor' | 'Admin' = 'Student';
-        if (email.includes('admin@') || email.includes('mentor@')) {
-          role = email.includes('admin@') ? 'Admin' : 'Mentor';
+        if (customRole === 'Admin') {
+          role = 'Admin';
+        } else if (customRole === 'Instructor' || customRole === 'Mentor') {
+          role = 'Mentor';
+        } else {
+          role = 'Student';
         }
 
         const userData: User = {
@@ -67,7 +74,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           email,
           name,
           role,
-          isEmailVerified: true, // Assume verified if user is authenticated
+          isEmailVerified: currentUser.attributes?.email_verified === 'true' || false,
         };
 
         setUser(userData);
@@ -101,7 +108,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const signUp = async (email: string, password: string, name: string) => {
+  const signUp = async (email: string, password: string, name: string, role: string = 'Student', membershipType: string = 'basic') => {
     setLoading(true);
     try {
       const { isSignUpComplete, userId, nextStep } = await amplifySignUp({
@@ -111,6 +118,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           userAttributes: {
             email,
             name,
+            'custom:role': role,
+            'custom:membership_type': membershipType,
+            'custom:subscription_status': 'active'
           },
         },
       });

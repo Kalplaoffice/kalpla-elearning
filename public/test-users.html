@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Users - Kalpla E-learning</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #2C4E41 0%, #FF804B 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2C4E41 0%, #FF804B 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .content {
+            padding: 40px;
+        }
+        
+        .user-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .user-card {
+            border: 2px solid #e5e7eb;
+            border-radius: 15px;
+            padding: 30px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .user-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .user-card.admin {
+            border-color: #dc2626;
+            background: linear-gradient(135deg, #fef2f2 0%, #ffffff 100%);
+        }
+        
+        .user-card.student {
+            border-color: #2563eb;
+            background: linear-gradient(135deg, #eff6ff 0%, #ffffff 100%);
+        }
+        
+        .user-card.instructor {
+            border-color: #059669;
+            background: linear-gradient(135deg, #ecfdf5 0%, #ffffff 100%);
+        }
+        
+        .user-card.premium {
+            border-color: #7c3aed;
+            background: linear-gradient(135deg, #faf5ff 0%, #ffffff 100%);
+        }
+        
+        .role-badge {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+        
+        .admin .role-badge {
+            background: #dc2626;
+            color: white;
+        }
+        
+        .student .role-badge {
+            background: #2563eb;
+            color: white;
+        }
+        
+        .instructor .role-badge {
+            background: #059669;
+            color: white;
+        }
+        
+        .premium .role-badge {
+            background: #7c3aed;
+            color: white;
+        }
+        
+        .user-icon {
+            font-size: 3rem;
+            margin-bottom: 20px;
+        }
+        
+        .user-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: #1f2937;
+        }
+        
+        .user-email {
+            font-family: 'Courier New', monospace;
+            background: #f3f4f6;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+            color: #374151;
+        }
+        
+        .user-password {
+            font-family: 'Courier New', monospace;
+            background: #f3f4f6;
+            padding: 8px 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            font-size: 0.9rem;
+            color: #374151;
+        }
+        
+        .user-description {
+            color: #6b7280;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        
+        .copy-btn {
+            background: #FF804B;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 5px;
+        }
+        
+        .copy-btn:hover {
+            background: #e76f3a;
+            transform: translateY(-2px);
+        }
+        
+        .login-btn {
+            background: #2C4E41;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            margin: 5px;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .login-btn:hover {
+            background: #1e3a32;
+            transform: translateY(-2px);
+        }
+        
+        .instructions {
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .instructions h2 {
+            color: #1f2937;
+            margin-bottom: 15px;
+        }
+        
+        .instructions ol {
+            color: #4b5563;
+            line-height: 1.8;
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 8px;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🧪 Test User Accounts</h1>
+            <p>Pre-configured accounts for testing different user roles</p>
+        </div>
+        
+        <div class="content">
+            <div class="instructions">
+                <h2>📋 How to Use These Test Accounts</h2>
+                <ol>
+                    <li><strong>Copy credentials</strong> using the "Copy Email" and "Copy Password" buttons</li>
+                    <li><strong>Go to login page</strong> by clicking "Login Now" or visiting <code>/auth/login</code></li>
+                    <li><strong>Paste credentials</strong> and test the login functionality</li>
+                    <li><strong>Test role-based access</strong> by navigating to different dashboard sections</li>
+                    <li><strong>Verify permissions</strong> for each user type</li>
+                </ol>
+            </div>
+            
+            <div class="user-grid">
+                <!-- Admin User -->
+                <div class="user-card admin">
+                    <div class="role-badge">Admin</div>
+                    <div class="user-icon">👨‍💼</div>
+                    <div class="user-title">Admin User</div>
+                    <div class="user-email" id="admin-email">admin@kalpla.com</div>
+                    <div class="user-password" id="admin-password">Admin123!</div>
+                    <div class="user-description">
+                        Full platform administrator with access to all features including user management, course creation, and analytics.
+                    </div>
+                    <button class="copy-btn" onclick="copyToClipboard('admin-email')">Copy Email</button>
+                    <button class="copy-btn" onclick="copyToClipboard('admin-password')">Copy Password</button>
+                    <a href="/auth/login" class="login-btn">Login Now</a>
+                </div>
+                
+                <!-- Regular Student -->
+                <div class="user-card student">
+                    <div class="role-badge">Student</div>
+                    <div class="user-icon">🎓</div>
+                    <div class="user-title">Regular Student</div>
+                    <div class="user-email" id="student-email">student@kalpla.com</div>
+                    <div class="user-password" id="student-password">Student123!</div>
+                    <div class="user-description">
+                        Standard student account with access to courses, assignments, and basic community features.
+                    </div>
+                    <button class="copy-btn" onclick="copyToClipboard('student-email')">Copy Email</button>
+                    <button class="copy-btn" onclick="copyToClipboard('student-password')">Copy Password</button>
+                    <a href="/auth/login" class="login-btn">Login Now</a>
+                </div>
+                
+                <!-- Instructor -->
+                <div class="user-card instructor">
+                    <div class="role-badge">Instructor</div>
+                    <div class="user-icon">👨‍🏫</div>
+                    <div class="user-title">Course Instructor</div>
+                    <div class="user-email" id="instructor-email">instructor@kalpla.com</div>
+                    <div class="user-password" id="instructor-password">Instructor123!</div>
+                    <div class="user-description">
+                        Course creator and instructor with permissions to create courses, manage students, and upload content.
+                    </div>
+                    <button class="copy-btn" onclick="copyToClipboard('instructor-email')">Copy Email</button>
+                    <button class="copy-btn" onclick="copyToClipboard('instructor-password')">Copy Password</button>
+                    <a href="/auth/login" class="login-btn">Login Now</a>
+                </div>
+                
+                <!-- Premium Student -->
+                <div class="user-card premium">
+                    <div class="role-badge">Premium</div>
+                    <div class="user-icon">💎</div>
+                    <div class="user-title">Premium Student</div>
+                    <div class="user-email" id="premium-email">premium@kalpla.com</div>
+                    <div class="user-password" id="premium-password">Premium123!</div>
+                    <div class="user-description">
+                        12-month membership student with access to premium community features, mentorship program, and live classes.
+                    </div>
+                    <button class="copy-btn" onclick="copyToClipboard('premium-email')">Copy Email</button>
+                    <button class="copy-btn" onclick="copyToClipboard('premium-password')">Copy Password</button>
+                    <a href="/auth/login" class="login-btn">Login Now</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>🔒 These are test accounts for development and testing purposes only</p>
+            <p>📝 For production, create real user accounts through the registration flow</p>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(elementId) {
+            const element = document.getElementById(elementId);
+            const text = element.textContent;
+            
+            navigator.clipboard.writeText(text).then(function() {
+                // Visual feedback
+                const button = event.target;
+                const originalText = button.textContent;
+                button.textContent = 'Copied!';
+                button.style.background = '#059669';
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.style.background = '#FF804B';
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Could not copy text: ', err);
+                alert('Failed to copy to clipboard');
+            });
+        }
+        
+        // Add click handlers for login buttons
+        document.querySelectorAll('.login-btn').forEach(button => {
+            button.addEventListener('click', function(e) {
+                // Store the credentials in sessionStorage for easy access
+                const card = this.closest('.user-card');
+                const email = card.querySelector('[id$="-email"]').textContent;
+                const password = card.querySelector('[id$="-password"]').textContent;
+                
+                sessionStorage.setItem('testEmail', email);
+                sessionStorage.setItem('testPassword', password);
+            });
+        });
+    </script>
+</body>
+</html>
