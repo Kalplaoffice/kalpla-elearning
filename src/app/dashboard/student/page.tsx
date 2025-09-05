@@ -252,17 +252,18 @@ export default function StudentDashboard() {
                       </div>
                     ) : (
                       courses.map((course, index) => (
-                      <CourseCard
-                        key={index}
-                        course={course}
-                        variant="compact"
-                        showProgress={true}
-                        showInstructor={true}
-                        showRating={false}
-                        showPricing={false}
-                        showBadges={false}
-                      />
-                    ))}
+                        <CourseCard
+                          key={index}
+                          course={course}
+                          variant="compact"
+                          showProgress={true}
+                          showInstructor={true}
+                          showRating={false}
+                          showPricing={false}
+                          showBadges={false}
+                        />
+                      ))
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -395,4 +396,4 @@ export default function StudentDashboard() {
       </div>
     </ProtectedRoute>
   );
-}
+}export const dynamic = "force-dynamic";

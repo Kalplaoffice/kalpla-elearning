@@ -4,6 +4,7 @@ import './globals.css'
 import Providers from './providers'
 import Navbar from '@/components/Navbar'
 import RoleBasedNav from '@/components/RoleBasedNav'
+import ClientOnly from '@/components/ClientOnly'
 import Footer from '@/components/Footer'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -24,7 +25,9 @@ export default function RootLayout({
         <Providers>
           <div className="min-h-screen flex flex-col">
             <Navbar />
-            <RoleBasedNav />
+            <ClientOnly>
+              <RoleBasedNav />
+            </ClientOnly>
             <main className="flex-1">
               {children}
             </main>

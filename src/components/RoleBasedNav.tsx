@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { useEffect, useState } from 'react';
 import { 
   BookOpen, 
   Users, 
@@ -58,6 +59,16 @@ const roleBasedNavItems = {
 
 export default function RoleBasedNav() {
   const { user, isAuthenticated } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Don't render during SSR
+  if (!mounted) {
+    return null;
+  }
 
   if (!isAuthenticated || !user) {
     return null;
@@ -113,6 +124,16 @@ export default function RoleBasedNav() {
 // Mobile navigation component
 export function MobileRoleBasedNav() {
   const { user, isAuthenticated } = useAuth();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Don't render during SSR
+  if (!mounted) {
+    return null;
+  }
 
   if (!isAuthenticated || !user) {
     return null;

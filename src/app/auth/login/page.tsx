@@ -1,6 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+
+// Force dynamic rendering
+export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,13 +22,23 @@ export default function LoginPage() {
   const [resendMessage, setResendMessage] = useState('');
   const { signIn, resendConfirmationCode, isAuthenticated, user, loading: authLoading } = useAuth();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (!authLoading && isAuthenticated && user) {
+    if (mounted && !authLoading && isAuthenticated && user) {
       router.push('/dashboard/student');
     }
-  }, [isAuthenticated, user, router, authLoading]);
+  }, [isAuthenticated, user, router, authLoading, mounted]);
+
+  // Don't render during SSR
+  if (!mounted) {
+    return null;
+  }
 
   // Show loading while checking authentication
   if (authLoading) {

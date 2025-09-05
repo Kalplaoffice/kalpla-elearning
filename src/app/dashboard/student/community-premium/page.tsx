@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { fetchAuthSession, getCurrentUser } from 'aws-amplify/auth';
+import { useAuth } from '@/contexts/AuthContext';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 // Mock community data - replace with actual GraphQL queries
 const communityServers = [
@@ -133,39 +134,20 @@ const userStats = {
 };
 
 export default function PremiumCommunityPage() {
-  const [user, setUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const { user, isAuthenticated, loading } = useAuth();
   const [hasMentorshipAccess, setHasMentorshipAccess] = useState(false);
   const [selectedServer, setSelectedServer] = useState(communityServers[0]);
   const [selectedChannel, setSelectedChannel] = useState(communityServers[0].channels[0]);
 
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const currentUser = await getCurrentUser();
-        const session = await fetchAuthSession();
-        const groups = session.tokens?.idToken?.payload['cognito:groups'] as string[] || [];
-        
-        setUser(currentUser);
-        setIsAuthorized(groups.includes('Student') || groups.includes('Admin'));
-        
-        // Check if user has mentorship access (premium feature)
-        // In production, this would check their subscription status
-        setHasMentorshipAccess(true); // Mock: assuming they have access
-        
-      } catch (error) {
-        console.error('Auth check failed:', error);
-        setIsAuthorized(false);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    if (isAuthenticated && user) {
+      // Check if user has mentorship access (premium feature)
+      // In production, this would check their subscription status
+      setHasMentorshipAccess(user.membershipType === 'premium' || user.role === 'Admin');
+    }
+  }, [isAuthenticated, user]);
 
-    checkAuth();
-  }, []);
-
-  if (isLoading) {
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -176,7 +158,7 @@ export default function PremiumCommunityPage() {
     );
   }
 
-  if (!isAuthorized) {
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -213,7 +195,8 @@ export default function PremiumCommunityPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white">
+    <ProtectedRoute requiredRole="Student">
+      <div className="min-h-screen bg-gray-900 text-white">
       <div className="flex h-screen">
         {/* Sidebar - Servers */}
         <div className="w-16 bg-gray-800 flex flex-col items-center py-4 space-y-2">
@@ -499,5 +482,6 @@ export default function PremiumCommunityPage() {
         </div>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }
