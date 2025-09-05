@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
+import CourseCard from '@/components/CourseCard'
 
 export default function Home() {
   return (
@@ -45,6 +46,83 @@ export default function Home() {
               <span className="text-2xl font-bold">$50M+</span>
               <span className="ml-2">Funding Raised</span>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Featured Courses Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <Badge className="mb-4 bg-[#FF804B]/10 text-[#FF804B] border-[#FF804B]/20">
+              🎓 Featured Courses
+            </Badge>
+            <h2 className="text-4xl font-bold text-gray-900 mb-4">
+              Start Learning Today
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Discover our most popular courses taught by industry experts
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 mb-12">
+            <CourseCard
+              course={{
+                id: '1',
+                title: 'Complete Web Development Bootcamp',
+                instructor: 'Sarah Johnson',
+                rating: 4.9,
+                totalRatings: 2345,
+                students: 12500,
+                duration: '40 hours',
+                difficulty: 'Beginner',
+                category: 'Web Development',
+                price: 199,
+                thumbnailUrl: '/api/placeholder/400/225',
+                createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+              }}
+              variant="featured"
+            />
+            <CourseCard
+              course={{
+                id: '2',
+                title: 'Advanced React Patterns',
+                instructor: 'Mike Chen',
+                rating: 4.8,
+                totalRatings: 1890,
+                students: 8900,
+                duration: '35 hours',
+                difficulty: 'Advanced',
+                category: 'Web Development',
+                price: 249,
+                thumbnailUrl: '/api/placeholder/400/225',
+                createdAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000).toISOString()
+              }}
+              variant="featured"
+            />
+            <CourseCard
+              course={{
+                id: '3',
+                title: 'Data Science with Python',
+                instructor: 'Dr. Emily Rodriguez',
+                rating: 4.9,
+                totalRatings: 3200,
+                students: 15600,
+                duration: '45 hours',
+                difficulty: 'Intermediate',
+                category: 'Data Science',
+                price: 299,
+                thumbnailUrl: '/api/placeholder/400/225',
+                createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+              }}
+              variant="featured"
+            />
+          </div>
+
+          <div className="text-center">
+            <Button asChild size="lg" className="bg-[#FF804B] hover:bg-[#FF804B]/90 text-white px-8 py-4 text-lg font-semibold">
+              <Link href="/courses">View All Courses</Link>
+            </Button>
           </div>
         </div>
       </section>

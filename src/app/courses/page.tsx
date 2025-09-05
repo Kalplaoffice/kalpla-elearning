@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import { courseAPI } from '@/lib/api';
+import CourseCard from '@/components/CourseCard';
 
 const categories = ['All', 'Web Development', 'Data Science', 'Cloud Computing', 'Mobile Development', 'Artificial Intelligence', 'DevOps'];
 
@@ -149,61 +150,17 @@ export default function CoursesPage() {
         </div>
 
         {/* Courses Grid */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
           {sortedCourses.map((course) => (
-            <Card key={course.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <div className="aspect-video bg-gray-200 relative">
-                <img
-                  src={course.thumbnailUrl || '/api/placeholder/300/200'}
-                  alt={course.title}
-                  className="w-full h-full object-cover"
-                />
-                {course.difficulty && (
-                  <div className="absolute top-2 right-2">
-                    <Badge className="bg-[#FF804B] text-white">
-                      {course.difficulty}
-                    </Badge>
-                  </div>
-                )}
-              </div>
-              <CardHeader>
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-sm text-blue-600 font-medium">{course.category || 'General'}</span>
-                  {course.rating && (
-                    <div className="flex items-center">
-                      <span className="text-yellow-500">★</span>
-                      <span className="ml-1 text-sm text-gray-600">{course.rating}</span>
-                    </div>
-                  )}
-                </div>
-                <CardTitle className="text-lg">{course.title}</CardTitle>
-                {course.subtitle && <CardDescription>{course.subtitle}</CardDescription>}
-              </CardHeader>
-              <CardContent>
-                {course.description && (
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                    {course.description}
-                  </p>
-                )}
-                <div className="flex justify-between items-center mb-4">
-                  <div className="text-sm text-gray-500">
-                    {course.students && <div>{course.students.toLocaleString()} students</div>}
-                    {course.duration && <div>{course.duration}</div>}
-                  </div>
-                  <div className="text-2xl font-bold text-blue-600">
-                    {course.price ? `$${course.price}` : 'Free'}
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button asChild className="flex-1">
-                    <Link href={`/courses/${course.id}`}>View Details</Link>
-                  </Button>
-                  <Button variant="outline" asChild>
-                    <Link href={`/courses/${course.id}/player/1`}>Start Learning</Link>
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+            <CourseCard
+              key={course.id}
+              course={course}
+              variant="default"
+              showInstructor={true}
+              showRating={true}
+              showPricing={true}
+              showBadges={true}
+            />
           ))}
         </div>
 

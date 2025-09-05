@@ -8,6 +8,7 @@ import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
 import { courseAPI, enrollmentAPI, analyticsAPI } from '@/lib/api';
+import CourseCard from '@/components/CourseCard';
 
 interface Course {
   id: string;
@@ -218,29 +219,16 @@ export default function StudentDashboard() {
                       </div>
                     ) : (
                       courses.map((course, index) => (
-                      <div key={index} className="flex items-center space-x-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors">
-                        <div className="w-12 h-12 bg-gradient-to-r from-[#2C4E41] to-[#FF804B] rounded-lg flex items-center justify-center">
-                          <span className="text-white font-bold text-sm">R</span>
-                        </div>
-                        <div className="flex-1">
-                          <h3 className="font-semibold text-gray-900">{course.title}</h3>
-                          <p className="text-sm text-gray-600">by {course.instructor}</p>
-                          <div className="mt-2">
-                            <div className="flex items-center justify-between text-sm text-gray-600 mb-1">
-                              <span>Progress</span>
-                              <span>{course.progress}%</span>
-                            </div>
-                            <div className="w-full bg-gray-200 rounded-full h-2">
-                              <div 
-                                className="bg-gradient-to-r from-[#2C4E41] to-[#FF804B] h-2 rounded-full transition-all duration-300"
-                                style={{ width: `${course.progress}%` }}
-                              ></div>
-                            </div>
-                          </div>
-                          <p className="text-xs text-gray-500 mt-1">Next: {course.nextLesson}</p>
-                        </div>
-                        <Button size="sm">Continue</Button>
-                      </div>
+                      <CourseCard
+                        key={index}
+                        course={course}
+                        variant="compact"
+                        showProgress={true}
+                        showInstructor={true}
+                        showRating={false}
+                        showPricing={false}
+                        showBadges={false}
+                      />
                     ))}
                   </div>
                 </CardContent>
