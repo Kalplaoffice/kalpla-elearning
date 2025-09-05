@@ -14,21 +14,50 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { signIn } = useAuth();
+  const [showResendConfirmation, setShowResendConfirmation] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
+  const { signIn, resendConfirmationCode } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    setShowResendConfirmation(false);
+    setResendMessage('');
 
     try {
       await signIn(email, password);
       router.push('/dashboard/student');
     } catch (err: any) {
       setError(err.message || 'An error occurred during sign in');
+      
+      // Show resend confirmation option if user needs to confirm email
+      if (err.message?.includes('confirm your account') || err.message?.includes('email and confirm')) {
+        setShowResendConfirmation(true);
+      }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!email) {
+      setResendMessage('Please enter your email address first');
+      return;
+    }
+
+    setResendLoading(true);
+    setResendMessage('');
+
+    try {
+      await resendConfirmationCode(email);
+      setResendMessage('Confirmation code sent! Please check your email.');
+    } catch (err: any) {
+      setResendMessage(err.message || 'Failed to send confirmation code');
+    } finally {
+      setResendLoading(false);
     }
   };
 
@@ -50,6 +79,31 @@ export default function LoginPage() {
               {error && (
                 <Alert variant="destructive">
                   <AlertDescription>{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {showResendConfirmation && (
+                <Alert className="border-blue-200 bg-blue-50">
+                  <AlertDescription className="text-blue-800">
+                    <div className="space-y-3">
+                      <p>Your account needs to be confirmed before you can sign in.</p>
+                      <div className="flex flex-col space-y-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={handleResendConfirmation}
+                          disabled={resendLoading || !email}
+                          className="w-full"
+                        >
+                          {resendLoading ? 'Sending...' : 'Resend Confirmation Email'}
+                        </Button>
+                        {resendMessage && (
+                          <p className="text-sm text-blue-700">{resendMessage}</p>
+                        )}
+                      </div>
+                    </div>
+                  </AlertDescription>
                 </Alert>
               )}
               
@@ -101,7 +155,7 @@ export default function LoginPage() {
               </Button>
             </form>
 
-            <div className="mt-6 text-center">
+            <div className="mt-6 text-center space-y-2">
               <p className="text-sm text-gray-600">
                 Don't have an account?{' '}
                 <Link 
@@ -109,6 +163,15 @@ export default function LoginPage() {
                   className="font-medium text-[#2C4E41] hover:text-[#2C4E41]/80"
                 >
                   Sign up here
+                </Link>
+              </p>
+              <p className="text-sm text-gray-600">
+                Need to verify your account?{' '}
+                <Link 
+                  href="/auth/verify" 
+                  className="font-medium text-[#FF804B] hover:text-[#FF804B]/80"
+                >
+                  Verify here
                 </Link>
               </p>
             </div>

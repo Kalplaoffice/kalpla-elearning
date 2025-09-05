@@ -43,7 +43,7 @@ export default function DebugAuth() {
     try {
       setResult('Testing sign up...');
       await signUp(testEmail, testPassword, testName);
-      setResult('Test user created successfully!');
+      setResult('Test user created successfully! Check email for verification.');
     } catch (error: any) {
       if (error.message?.includes('already exists')) {
         setResult('User already exists, trying to sign in...');
@@ -51,8 +51,14 @@ export default function DebugAuth() {
           await signIn(testEmail, testPassword);
           setResult('Sign in successful!');
         } catch (signInError: any) {
-          setResult(`Sign in error: ${signInError.message}`);
+          if (signInError.message?.includes('confirm your account')) {
+            setResult('User exists but needs email confirmation. Use the verify page to confirm your account.');
+          } else {
+            setResult(`Sign in error: ${signInError.message}`);
+          }
         }
+      } else if (error.message?.includes('email and confirm')) {
+        setResult('User created! Please check email for verification before signing in.');
       } else {
         setResult(`Sign up error: ${error.message}`);
       }
@@ -234,6 +240,7 @@ export default function DebugAuth() {
             <ol className="list-decimal list-inside space-y-2 text-sm text-gray-700">
               <li>Try creating a test user with the "Quick Test Users" buttons</li>
               <li>If user already exists, the system will try to sign in instead</li>
+              <li>If sign-in fails due to email confirmation, use the <Link href="/auth/verify" className="text-[#FF804B] hover:underline">verification page</Link></li>
               <li>Check the browser console for detailed error logs</li>
               <li>Verify that the AWS Amplify configuration is correct</li>
               <li>Check that the Cognito User Pool is properly configured</li>
