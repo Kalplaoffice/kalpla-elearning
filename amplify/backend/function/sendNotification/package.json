@@ -1,0 +1,11 @@
+{
+  "name": "sendNotification",
+  "version": "2.0.0",
+  "description": "Lambda function for sending multi-channel notifications (push, email, SMS)",
+  "main": "index.js",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "aws-sdk": "^2.1490.0",
+    "uuid": "^9.0.1"
+  }
+}

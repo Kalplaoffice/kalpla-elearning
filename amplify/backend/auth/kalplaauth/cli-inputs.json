@@ -1,0 +1,77 @@
+{
+  "version": "1",
+  "cognitoConfig": {
+    "identityPoolName": "kalplaauth_identitypool_XXXXXXXXX",
+    "allowUnauthenticatedIdentities": false,
+    "resourceNameTruncated": "kalplaauth",
+    "userPoolName": "kalplaauth_userpool_XXXXXXXXX",
+    "autoVerifiedAttributes": [
+      "email"
+    ],
+    "mfaConfiguration": "OPTIONAL",
+    "mfaTypes": [
+      "SMS",
+      "TOTP"
+    ],
+    "smsAuthenticationMessage": "Your Kalpla verification code is {####}",
+    "smsVerificationMessage": "Your Kalpla verification code is {####}",
+    "emailVerificationSubject": "Verify your Kalpla account",
+    "emailVerificationMessage": "Welcome to Kalpla! Please verify your email address by clicking the link: {##Verify Email##}",
+    "defaultPasswordPolicy": true,
+    "passwordPolicyMinLength": 8,
+    "passwordPolicyCharacters": [
+      "Requires Lowercase",
+      "Requires Uppercase",
+      "Requires Numbers",
+      "Requires Symbols"
+    ],
+    "requiredAttributes": [
+      "email",
+      "name"
+    ],
+    "aliasAttributes": [],
+    "userpoolClientGenerateSecret": false,
+    "userpoolClientWriteAttributes": [
+      "email",
+      "name",
+      "phone_number"
+    ],
+    "userpoolClientReadAttributes": [
+      "email",
+      "name",
+      "phone_number"
+    ],
+    "userpoolClientLambdaRole": "kalplaauth_userpoolclient_lambda_role",
+    "userpoolClientSetAttributes": false,
+    "sharedId": "kalplaauth",
+    "resourceName": "kalplaauth",
+    "authSelections": "identityPoolAndUserPool",
+    "useDefault": "manual",
+    "userPoolGroupList": [
+      "Students",
+      "Mentors",
+      "Admins",
+      "Moderators"
+    ],
+    "serviceName": "Cognito",
+    "usernameCaseSensitive": false,
+    "useEnabledMfas": true,
+    "authRoleArn": "arn:aws:iam::112914241644:role/amplify-kalplaelearning-dev-123456-authRole",
+    "unauthRoleArn": "arn:aws:iam::112914241644:role/amplify-kalplaelearning-dev-123456-unauthRole",
+    "breakCircularDependency": true,
+    "dependsOn": [],
+    "permissions": [],
+    "authTriggerConnections": [
+      {
+        "lambdaFunctionName": "kalplaauthPostConfirmation",
+        "lambdaFunctionArn": "arn:aws:lambda:ap-south-1:112914241644:function:kalplaauthPostConfirmation",
+        "triggerType": "PostConfirmation"
+      },
+      {
+        "lambdaFunctionName": "kalplaauthPreSignUp",
+        "lambdaFunctionArn": "arn:aws:lambda:ap-south-1:112914241644:function:kalplaauthPreSignUp",
+        "triggerType": "PreSignUp"
+      }
+    ]
+  }
+}

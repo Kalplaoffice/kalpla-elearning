@@ -1,0 +1,1102 @@
+# Enterprise-Grade E-Learning Platform GraphQL Schema
+# Comprehensive data model for courses, mentorship, community, and admin features
+
+# =============================================================================
+# USER MANAGEMENT & AUTHENTICATION
+# =============================================================================
+
+type User @model 
+@auth(rules: [
+  { allow: owner, operations: [read, update] },
+  { allow: groups, groups: ["Admin", "Mentor"], operations: [read, update] },
+  { allow: groups, groups: ["Admin"], operations: [create, delete] }
+])
+@key(name: "byEmail", fields: ["email"], queryField: "userByEmail")
+@key(name: "byRole", fields: ["role", "createdAt"], queryField: "usersByRole")
+{
+  id: ID!
+  sub: String! @index(name: "bySub", queryField: "userBySub")
+  email: AWSEmail!
+  name: String!
+  firstName: String
+  lastName: String
+  avatar: AWSURL
+  role: UserRole!
+  status: UserStatus!
+  
+  # Profile Information
+  bio: String
+  location: String
+  timezone: String
+  language: String
+  phone: AWSPhone
+  
+  # Learning Progress
+  points: Int! @default(value: 0)
+  level: Int! @default(value: 1)
+  badges: [String!]!
+  achievements: [String!]!
+  
+  # Social Features
+  followers: [ID!]!
+  following: [ID!]!
+  connections: [ID!]!
+  
+  # Preferences
+  notificationSettings: NotificationSettings
+  privacySettings: PrivacySettings
+  
+  # Timestamps
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  lastLoginAt: AWSDateTime
+  emailVerified: Boolean! @default(value: false)
+  phoneVerified: Boolean! @default(value: false)
+}
+
+type NotificationSettings {
+  email: Boolean! @default(value: true)
+  push: Boolean! @default(value: true)
+  sms: Boolean! @default(value: false)
+  courseUpdates: Boolean! @default(value: true)
+  communityUpdates: Boolean! @default(value: true)
+  mentorshipUpdates: Boolean! @default(value: true)
+  marketing: Boolean! @default(value: false)
+}
+
+type PrivacySettings {
+  profileVisibility: ProfileVisibility! @default(value: PUBLIC)
+  showEmail: Boolean! @default(value: false)
+  showPhone: Boolean! @default(value: false)
+  showLocation: Boolean! @default(value: false)
+  allowMessages: Boolean! @default(value: true)
+}
+
+enum UserRole {
+  STUDENT
+  MENTOR
+  ADMIN
+  MODERATOR
+}
+
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+  PENDING_APPROVAL
+}
+
+enum ProfileVisibility {
+  PUBLIC
+  FRIENDS
+  PRIVATE
+}
+
+# =============================================================================
+# COURSE MANAGEMENT
+# =============================================================================
+
+type Course @model 
+@auth(rules: [
+  { allow: public, operations: [read] },
+  { allow: groups, groups: ["Admin", "Mentor"], operations: [create, update, delete] }
+])
+@key(name: "byCategory", fields: ["category", "createdAt"], queryField: "coursesByCategory")
+@key(name: "byInstructor", fields: ["instructorId", "createdAt"], queryField: "coursesByInstructor")
+@key(name: "byStatus", fields: ["isPublished", "createdAt"], queryField: "coursesByStatus")
+{
+  id: ID!
+  title: String!
+  subtitle: String
+  description: String!
+  longDescription: String
+  
+  # Course Details
+  category: CourseCategory!
+  subcategory: String
+  difficulty: DifficultyLevel!
+  language: String! @default(value: "en")
+  duration: Int! # in minutes
+  lessons: Int! @default(value: 0)
+  
+  # Pricing
+  price: Float!
+  originalPrice: Float
+  currency: String! @default(value: "USD")
+  isFree: Boolean! @default(value: false)
+  
+  # Media
+  thumbnail: AWSURL
+  trailer: AWSURL
+  previewVideo: AWSURL
+  
+  # Content
+  instructorId: ID!
+  instructor: User @connection(fields: ["instructorId"])
+  modules: [Module!]! @hasMany(indexName: "byCourse", fields: ["id"])
+  
+  # Course Settings
+  isPublished: Boolean! @default(value: false)
+  isFeatured: Boolean! @default(value: false)
+  isNew: Boolean! @default(value: true)
+  
+  # Drip Content
+  dripMode: DripMode! @default(value: NONE)
+  dripDaysByModule: [Int!]
+  
+  # Requirements & Outcomes
+  requirements: [String!]!
+  whatYoullLearn: [String!]!
+  includes: [String!]!
+  
+  # SEO & Marketing
+  tags: [String!]!
+  keywords: [String!]!
+  slug: String! @index(name: "bySlug", queryField: "courseBySlug")
+  
+  # Analytics
+  views: Int! @default(value: 0)
+  enrollments: Int! @default(value: 0)
+  completions: Int! @default(value: 0)
+  rating: Float! @default(value: 0)
+  reviewCount: Int! @default(value: 0)
+  
+  # Timestamps
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  publishedAt: AWSDateTime
+}
+
+type Module @model 
+@auth(rules: [
+  { allow: groups, groups: ["Admin", "Mentor"], operations: [create, update, delete] },
+  { allow: private, operations: [read] }
+])
+@key(name: "byCourse", fields: ["courseId", "order"], queryField: "modulesByCourse")
+{
+  id: ID!
+  courseId: ID!
+  course: Course @connection(fields: ["courseId"])
+  title: String!
+  description: String
+  order: Int!
+  duration: Int! # in minutes
+  lessons: [Lesson!]! @hasMany(indexName: "byModule", fields: ["id"])
+  
+  # Module Settings
+  isPublished: Boolean! @default(value: false)
+  isUnlocked: Boolean! @default(value: true)
+  unlockAt: AWSDateTime
+  
+  # Timestamps
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type Lesson @model 
+@auth(rules: [
+  { allow: groups, groups: ["Admin", "Mentor"], operations: [create, update, delete] },
+  { allow: private, operations: [read] }
+])
+@key(name: "byModule", fields: ["moduleId", "order"], queryField: "lessonsByModule")
+@key(name: "byCourse", fields: ["courseId", "order"], queryField: "lessonsByCourse")
+{
+  id: ID!
+  courseId: ID!
+  course: Course @connection(fields: ["courseId"])
+  moduleId: ID!
+  module: Module @connection(fields: ["moduleId"])
+  
+  title: String!
+  description: String
+  order: Int!
+  duration: Int! # in minutes
+  type: LessonType!
+  
+  # Content
+  videoUrl: AWSURL
+  audioUrl: AWSURL
+  content: String # for text lessons
+  resources: [Resource!]! @hasMany(indexName: "byLesson", fields: ["id"])
+  
+  # Settings
+  isPublished: Boolean! @default(value: false)
+  isPreview: Boolean! @default(value: false)
+  isUnlocked: Boolean! @default(value: true)
+  unlockAt: AWSDateTime
+  
+  # Timestamps
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type Resource @model 
+@auth(rules: [
+  { allow: groups, groups: ["Admin", "Mentor"], operations: [create, update, delete] },
+  { allow: private, operations: [read] }
+])
+@key(name: "byLesson", fields: ["lessonId", "createdAt"], queryField: "resourcesByLesson")
+{
+  id: ID!
+  lessonId: ID!
+  lesson: Lesson @connection(fields: ["lessonId"])
+  
+  name: String!
+  description: String
+  type: ResourceType!
+  url: AWSURL!
+  size: Int # in bytes
+  mimeType: String
+  
+  # Timestamps
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+enum CourseCategory {
+  WEB_DEVELOPMENT
+  DATA_SCIENCE
+  MOBILE_DEVELOPMENT
+  CLOUD_COMPUTING
+  DEVOPS
+  MACHINE_LEARNING
+  CYBERSECURITY
+  UI_UX_DESIGN
+  DIGITAL_MARKETING
+  BUSINESS
+  DESIGN
+  PHOTOGRAPHY
+  MUSIC
+  WRITING
+  LANGUAGES
+  OTHER
+}
+
+enum DifficultyLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum LessonType {
+  VIDEO
+  AUDIO
+  TEXT
+  QUIZ
+  ASSIGNMENT
+  LIVE_SESSION
+  DOWNLOAD
+}
+
+enum ResourceType {
+  PDF
+  DOCUMENT
+  IMAGE
+  VIDEO
+  AUDIO
+  CODE
+  PRESENTATION
+  SPREADSHEET
+  OTHER
+}
+
+enum DripMode {
+  NONE
+  SEQUENTIAL
+  TIME_BASED
+  DATE_BASED
+}
+
+# =============================================================================
+# ENROLLMENTS & PROGRESS
+# =============================================================================
+
+type Enrollment @model 
+@auth(rules: [
+  { allow: owner, operations: [read, update] },
+  { allow: groups, groups: ["Admin", "Mentor"], operations: [read, update, delete] }
+])
+@key(name: "byUser", fields: ["userId", "createdAt"], queryField: "enrollmentsByUser")
+@key(name: "byCourse", fields: ["courseId", "createdAt"], queryField: "enrollmentsByCourse")
+{
+  id: ID!
+  userId: ID!
+  user: User @connection(fields: ["userId"])
+  courseId: ID!
+  course: Course @connection(fields: ["courseId"])
+  
+  # Enrollment Details
+  status: EnrollmentStatus!
+  progress: Float! @default(value: 0) # percentage
+  completedLessons: Int! @default(value: 0)
+  totalLessons: Int! @default(value: 0)
+  
+  # Pricing
+  pricePaid: Float!
+  currency: String! @default(value: "USD")
+  paymentMethod: String
+  transactionId: String
+  
+  # Timestamps
+  enrolledAt: AWSDateTime!
+  startedAt: AWSDateTime
+  completedAt: AWSDateTime
+  lastAccessedAt: AWSDateTime
+  expiresAt: AWSDateTime
+  
+  # Certificates
+  certificateIssued: Boolean! @default(value: false)
+  certificateUrl: AWSURL
+  certificateId: String
+}
+
+type LessonProgress @model 
+@auth(rules: [
+  { allow: owner, operations: [read, update] },
+  { allow: groups, groups: ["Admin", "Mentor"], operations: [read] }
+])
+@key(name: "byUserLesson", fields: ["userId", "lessonId"], queryField: "progressByUserLesson")
+@key(name: "byUserCourse", fields: ["userId", "courseId", "updatedAt"], queryField: "progressByUserCourse")
+{
+  id: ID!
+  userId: ID!
+  user: User @connection(fields: ["userId"])
+  courseId: ID!
+  course: Course @connection(fields: ["courseId"])
+  lessonId: ID!
+  lesson: Lesson @connection(fields: ["lessonId"])
+  
+  # Progress Details
+  watchedSeconds: Int! @default(value: 0)
+  totalSeconds: Int! @default(value: 0)
+  progress: Float! @default(value: 0) # percentage
+  isCompleted: Boolean! @default(value: false)
+  
+  # Timestamps
+  startedAt: AWSDateTime
+  completedAt: AWSDateTime
+  lastWatchedAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+enum EnrollmentStatus {
+  ACTIVE
+  COMPLETED
+  PAUSED
+  CANCELLED
+  EXPIRED
+  REFUNDED
+}
+
+# =============================================================================
+# ASSIGNMENTS & ASSESSMENTS
+# =============================================================================
+
+type Assignment @model 
+@auth(rules: [
+  { allow: groups, groups: ["Admin", "Mentor"], operations: [create, update, delete] },
+  { allow: private, operations: [read] }
+])
+@key(name: "byCourse", fields: ["courseId", "createdAt"], queryField: "assignmentsByCourse")
+@key(name: "byLesson", fields: ["lessonId", "createdAt"], queryField: "assignmentsByLesson")
+{
+  id: ID!
+  courseId: ID!
+  course: Course @connection(fields: ["courseId"])
+  lessonId: ID
+  lesson: Lesson @connection(fields: ["lessonId"])
+  
+  title: String!
+  description: String!
+  instructions: String!
+  type: AssignmentType!
+  
+  # Settings
+  maxGrade: Int! @default(value: 100)
+  weight: Float! @default(value: 1.0)
+  isPublished: Boolean! @default(value: false)
+  allowLateSubmissions: Boolean! @default(value: true)
+  
+  # Due Date
+  dueDate: AWSDateTime
+  latePenalty: Float @default(value: 0) # percentage
+  
+  # Rubric
+  rubric: [RubricItem!]
+  
+  # Submissions
+  submissions: [AssignmentSubmission!]! @hasMany(indexName: "byAssignment", fields: ["id"])
+  
+  # Timestamps
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type AssignmentSubmission @model 
+@auth(rules: [
+  { allow: owner, operations: [create, read, update] },
+  { allow: groups, groups: ["Admin", "Mentor"], operations: [read, update] }
+])
+@key(name: "byAssignment", fields: ["assignmentId", "createdAt"], queryField: "submissionsByAssignment")
+@key(name: "byUser", fields: ["userId", "createdAt"], queryField: "submissionsByUser")
+{
+  id: ID!
+  userId: ID!
+  user: User @connection(fields: ["userId"])
+  assignmentId: ID!
+  assignment: Assignment @connection(fields: ["assignmentId"])
+  
+  # Submission Content
+  content: String
+  files: [AWSURL!]
+  links: [AWSURL!]
+  
+  # Grading
+  status: SubmissionStatus!
+  grade: Float
+  feedback: String
+  gradedBy: ID
+  gradedAt: AWSDateTime
+  
+  # Timestamps
+  submittedAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type RubricItem {
+  criterion: String!
+  description: String!
+  points: Int!
+  weight: Float @default(value: 1.0)
+}
+
+enum AssignmentType {
+  PROJECT
+  CODING
+  QUIZ
+  ESSAY
+  PRESENTATION
+  PEER_REVIEW
+  DISCUSSION
+}
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+  GRADED
+  NEEDS_REVISION
+  LATE
+  MISSING
+}
+
+# =============================================================================
+# MENTORSHIP PROGRAM
+# =============================================================================
+
+type MentorshipProgram @model 
+@auth(rules: [
+  { allow: public, operations: [read] },
+  { allow: groups, groups: ["Admin"], operations: [create, update, delete] }
+])
+@key(name: "byStatus", fields: ["isActive", "createdAt"], queryField: "programsByStatus")
+{
+  id: ID!
+  title: String!
+  description: String!
+  duration: Int! # in months
+  
+  # Program Details
+  price: Float!
+  currency: String! @default(value: "USD")
+  maxStudents: Int!
+  currentStudents: Int! @default(value: 0)
+  
+  # Features
+  features: [String!]!
+  benefits: [String!]!
+  requirements: [String!]!
+  
+  # Settings
+  isActive: Boolean! @default(value: true)
+  isFeatured: Boolean! @default(value: false)
+  
+  # Mentors
+  mentors: [MentorProgram!]! @hasMany(indexName: "byProgram", fields: ["id"])
+  enrollments: [MentorshipEnrollment!]! @hasMany(indexName: "byProgram", fields: ["id"])
+  
+  # Timestamps
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type MentorProgram @model 
+@auth(rules: [
+  { allow: groups, groups: ["Admin"], operations: [create, update, delete] },
+  { allow: private, operations: [read] }
+])
+@key(name: "byProgram", fields: ["programId", "mentorId"], queryField: "mentorsByProgram")
+@key(name: "byMentor", fields: ["mentorId", "programId"], queryField: "programsByMentor")
+{
+  id: ID!
+  programId: ID!
+  program: MentorshipProgram @connection(fields: ["programId"])
+  mentorId: ID!
+  mentor: User @connection(fields: ["mentorId"])
+  
+  # Mentor Details
+  maxStudents: Int! @default(value: 10)
+  currentStudents: Int! @default(value: 0)
+  hourlyRate: Float
+  availability: String
+  
+  # Timestamps
+  joinedAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type MentorshipEnrollment @model 
+@auth(rules: [
+  { allow: owner, operations: [read, update] },
+  { allow: groups, groups: ["Admin", "Mentor"], operations: [read, update] }
+])
+@key(name: "byProgram", fields: ["programId", "createdAt"], queryField: "enrollmentsByProgram")
+@key(name: "byUser", fields: ["userId", "createdAt"], queryField: "mentorshipEnrollmentsByUser")
+{
+  id: ID!
+  userId: ID!
+  user: User @connection(fields: ["userId"])
+  programId: ID!
+  program: MentorshipProgram @connection(fields: ["programId"])
+  mentorId: ID!
+  mentor: User @connection(fields: ["mentorId"])
+  
+  # Enrollment Details
+  status: MentorshipStatus!
+  startDate: AWSDateTime!
+  endDate: AWSDateTime!
+  
+  # Sessions
+  sessions: [MentorshipSession!]! @hasMany(indexName: "byEnrollment", fields: ["id"])
+  
+  # Timestamps
+  enrolledAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type MentorshipSession @model 
+@auth(rules: [
+  { allow: owner, operations: [read, update] },
+  { allow: groups, groups: ["Admin", "Mentor"], operations: [read, update] }
+])
+@key(name: "byEnrollment", fields: ["enrollmentId", "scheduledAt"], queryField: "sessionsByEnrollment")
+{
+  id: ID!
+  enrollmentId: ID!
+  enrollment: MentorshipEnrollment @connection(fields: ["enrollmentId"])
+  
+  # Session Details
+  title: String!
+  description: String
+  type: SessionType!
+  duration: Int! # in minutes
+  
+  # Scheduling
+  scheduledAt: AWSDateTime!
+  startedAt: AWSDateTime
+  endedAt: AWSDateTime
+  status: SessionStatus!
+  
+  # Content
+  notes: String
+  recordingUrl: AWSURL
+  resources: [AWSURL!]
+  
+  # Timestamps
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+enum MentorshipStatus {
+  ACTIVE
+  COMPLETED
+  CANCELLED
+  PAUSED
+}
+
+enum SessionType {
+  ONE_ON_ONE
+  GROUP
+  WORKSHOP
+  Q_AND_A
+  REVIEW
+}
+
+enum SessionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+# =============================================================================
+# COMMUNITY FEATURES
+# =============================================================================
+
+type CommunityGroup @model 
+@auth(rules: [
+  { allow: public, operations: [read] },
+  { allow: groups, groups: ["Admin", "Mentor"], operations: [create, update, delete] },
+  { allow: owner, operations: [update, delete] }
+])
+@key(name: "byCategory", fields: ["category", "createdAt"], queryField: "groupsByCategory")
+@key(name: "byStatus", fields: ["isActive", "createdAt"], queryField: "groupsByStatus")
+{
+  id: ID!
+  name: String!
+  description: String!
+  category: GroupCategory!
+  
+  # Group Settings
+  isPrivate: Boolean! @default(value: false)
+  isActive: Boolean! @default(value: true)
+  maxMembers: Int
+  currentMembers: Int! @default(value: 0)
+  
+  # Media
+  avatar: AWSURL
+  coverImage: AWSURL
+  
+  # Owner & Moderators
+  ownerId: ID!
+  owner: User @connection(fields: ["ownerId"])
+  moderators: [ID!]!
+  
+  # Content
+  posts: [CommunityPost!]! @hasMany(indexName: "byGroup", fields: ["id"])
+  members: [CommunityMember!]! @hasMany(indexName: "byGroup", fields: ["id"])
+  
+  # Timestamps
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type CommunityMember @model 
+@auth(rules: [
+  { allow: owner, operations: [create, read, update, delete] },
+  { allow: groups, groups: ["Admin", "Mentor"], operations: [read, update, delete] }
+])
+@key(name: "byGroup", fields: ["groupId", "joinedAt"], queryField: "membersByGroup")
+@key(name: "byUser", fields: ["userId", "joinedAt"], queryField: "groupsByUser")
+{
+  id: ID!
+  userId: ID!
+  user: User @connection(fields: ["userId"])
+  groupId: ID!
+  group: CommunityGroup @connection(fields: ["groupId"])
+  
+  # Member Details
+  role: MemberRole! @default(value: MEMBER)
+  status: MemberStatus! @default(value: ACTIVE)
+  
+  # Timestamps
+  joinedAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type CommunityPost @model 
+@auth(rules: [
+  { allow: owner, operations: [create, read, update, delete] },
+  { allow: groups, groups: ["Admin", "Mentor"], operations: [read, update, delete] },
+  { allow: private, operations: [read] }
+])
+@key(name: "byGroup", fields: ["groupId", "createdAt"], queryField: "postsByGroup")
+@key(name: "byUser", fields: ["userId", "createdAt"], queryField: "postsByUser")
+{
+  id: ID!
+  userId: ID!
+  user: User @connection(fields: ["userId"])
+  groupId: ID!
+  group: CommunityGroup @connection(fields: ["groupId"])
+  
+  # Post Content
+  title: String
+  content: String!
+  type: PostType!
+  
+  # Media
+  images: [AWSURL!]
+  videos: [AWSURL!]
+  files: [AWSURL!]
+  
+  # Engagement
+  likes: Int! @default(value: 0)
+  comments: Int! @default(value: 0)
+  shares: Int! @default(value: 0)
+  
+  # Settings
+  isPinned: Boolean! @default(value: false)
+  isLocked: Boolean! @default(value: false)
+  
+  # Comments
+  postComments: [CommunityComment!]! @hasMany(indexName: "byPost", fields: ["id"])
+  
+  # Timestamps
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+type CommunityComment @model 
+@auth(rules: [
+  { allow: owner, operations: [create, read, update, delete] },
+  { allow: groups, groups: ["Admin", "Mentor"], operations: [read, update, delete] },
+  { allow: private, operations: [read] }
+])
+@key(name: "byPost", fields: ["postId", "createdAt"], queryField: "commentsByPost")
+@key(name: "byUser", fields: ["userId", "createdAt"], queryField: "commentsByUser")
+{
+  id: ID!
+  userId: ID!
+  user: User @connection(fields: ["userId"])
+  postId: ID!
+  post: CommunityPost @connection(fields: ["postId"])
+  
+  # Comment Content
+  content: String!
+  
+  # Engagement
+  likes: Int! @default(value: 0)
+  
+  # Timestamps
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+enum GroupCategory {
+  GENERAL
+  COURSE_SPECIFIC
+  MENTORSHIP
+  STUDY_GROUP
+  PROJECT_COLLABORATION
+  NETWORKING
+  SUPPORT
+  OFF_TOPIC
+}
+
+enum MemberRole {
+  OWNER
+  MODERATOR
+  MEMBER
+}
+
+enum MemberStatus {
+  ACTIVE
+  MUTED
+  BANNED
+  LEFT
+}
+
+enum PostType {
+  TEXT
+  IMAGE
+  VIDEO
+  POLL
+  ANNOUNCEMENT
+  QUESTION
+  RESOURCE
+}
+
+# =============================================================================
+# PAYMENTS & SUBSCRIPTIONS
+# =============================================================================
+
+type Payment @model 
+@auth(rules: [
+  { allow: owner, operations: [read] },
+  { allow: groups, groups: ["Admin"], operations: [read, update] }
+])
+@key(name: "byUser", fields: ["userId", "createdAt"], queryField: "paymentsByUser")
+@key(name: "byStatus", fields: ["status", "createdAt"], queryField: "paymentsByStatus")
+{
+  id: ID!
+  userId: ID!
+  user: User @connection(fields: ["userId"])
+  
+  # Payment Details
+  amount: Float!
+  currency: String! @default(value: "USD")
+  status: PaymentStatus!
+  method: PaymentMethod!
+  
+  # Transaction Details
+  transactionId: String!
+  gatewayTransactionId: String
+  gateway: PaymentGateway!
+  
+  # Related Items
+  courseId: ID
+  course: Course @connection(fields: ["courseId"])
+  programId: ID
+  program: MentorshipProgram @connection(fields: ["programId"])
+  
+  # Timestamps
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  processedAt: AWSDateTime
+}
+
+type Subscription @model 
+@auth(rules: [
+  { allow: owner, operations: [read, update] },
+  { allow: groups, groups: ["Admin"], operations: [read, update] }
+])
+@key(name: "byUser", fields: ["userId", "createdAt"], queryField: "subscriptionsByUser")
+@key(name: "byStatus", fields: ["status", "createdAt"], queryField: "subscriptionsByStatus")
+{
+  id: ID!
+  userId: ID!
+  user: User @connection(fields: ["userId"])
+  
+  # Subscription Details
+  planId: String!
+  planName: String!
+  amount: Float!
+  currency: String! @default(value: "USD")
+  interval: SubscriptionInterval!
+  
+  # Status
+  status: SubscriptionStatus!
+  currentPeriodStart: AWSDateTime!
+  currentPeriodEnd: AWSDateTime!
+  cancelAtPeriodEnd: Boolean! @default(value: false)
+  
+  # Payment
+  paymentMethodId: String
+  lastPaymentDate: AWSDateTime
+  nextPaymentDate: AWSDateTime
+  
+  # Timestamps
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  cancelledAt: AWSDateTime
+}
+
+enum PaymentStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+  REFUNDED
+  PARTIALLY_REFUNDED
+}
+
+enum PaymentMethod {
+  CREDIT_CARD
+  DEBIT_CARD
+  PAYPAL
+  BANK_TRANSFER
+  WALLET
+  EMI
+}
+
+enum PaymentGateway {
+  STRIPE
+  RAZORPAY
+  PAYPAL
+  SQUARE
+  BRAINTREE
+}
+
+enum SubscriptionInterval {
+  MONTHLY
+  QUARTERLY
+  YEARLY
+  LIFETIME
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PAST_DUE
+  UNPAID
+  INCOMPLETE
+  TRIALING
+}
+
+# =============================================================================
+# NOTIFICATIONS
+# =============================================================================
+
+type Notification @model 
+@auth(rules: [
+  { allow: owner, operations: [read, update] },
+  { allow: groups, groups: ["Admin"], operations: [create, read, update, delete] }
+])
+@key(name: "byUser", fields: ["userId", "createdAt"], queryField: "notificationsByUser")
+@key(name: "byType", fields: ["type", "createdAt"], queryField: "notificationsByType")
+{
+  id: ID!
+  userId: ID!
+  user: User @connection(fields: ["userId"])
+  
+  # Notification Content
+  title: String!
+  message: String!
+  type: NotificationType!
+  
+  # Data
+  data: AWSJSON
+  actionUrl: String
+  
+  # Status
+  isRead: Boolean! @default(value: false)
+  isArchived: Boolean! @default(value: false)
+  
+  # Timestamps
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  readAt: AWSDateTime
+}
+
+enum NotificationType {
+  COURSE_UPDATE
+  ASSIGNMENT_DUE
+  MENTORSHIP_SESSION
+  COMMUNITY_POST
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  CERTIFICATE_ISSUED
+  SYSTEM_ANNOUNCEMENT
+  MESSAGE_RECEIVED
+  FRIEND_REQUEST
+  ACHIEVEMENT_UNLOCKED
+}
+
+# =============================================================================
+# ANALYTICS & REPORTING
+# =============================================================================
+
+type Analytics @model 
+@auth(rules: [
+  { allow: groups, groups: ["Admin"], operations: [create, read, update, delete] }
+])
+@key(name: "byDate", fields: ["date", "type"], queryField: "analyticsByDate")
+{
+  id: ID!
+  date: AWSDate!
+  type: AnalyticsType!
+  
+  # Metrics
+  totalUsers: Int!
+  activeUsers: Int!
+  newUsers: Int!
+  totalCourses: Int!
+  totalEnrollments: Int!
+  totalRevenue: Float!
+  
+  # Course Metrics
+  courseViews: Int!
+  courseEnrollments: Int!
+  courseCompletions: Int!
+  
+  # Community Metrics
+  totalPosts: Int!
+  totalComments: Int!
+  totalGroups: Int!
+  
+  # Data
+  data: AWSJSON
+  
+  # Timestamps
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+enum AnalyticsType {
+  DAILY
+  WEEKLY
+  MONTHLY
+  YEARLY
+}
+
+# =============================================================================
+# MUTATIONS
+# =============================================================================
+
+type Mutation {
+  # Assignment Grading
+  gradeAssignment(
+    submissionId: ID!
+    grade: Float!
+    feedback: String
+  ): AssignmentSubmission @function(name: "gradeAssignmentPoints")
+  
+  # Voice Channel Management
+  joinVoiceChannel(
+    channelId: ID!
+    userId: ID!
+  ): String @function(name: "joinVoiceChannel")
+  
+  # Content Moderation
+  moderateContent(
+    content: String!
+    type: String!
+  ): ModerationResult @function(name: "contentModeration")
+  
+  # Send Notification
+  sendNotification(
+    userId: ID!
+    title: String!
+    message: String!
+    type: NotificationType!
+    data: AWSJSON
+  ): Notification @function(name: "sendNotification")
+  
+  # Course Progress
+  updateLessonProgress(
+    userId: ID!
+    lessonId: ID!
+    progress: Float!
+    watchedSeconds: Int!
+  ): LessonProgress
+  
+  # Community Actions
+  likePost(postId: ID!): CommunityPost
+  unlikePost(postId: ID!): CommunityPost
+  likeComment(commentId: ID!): CommunityComment
+  unlikeComment(commentId: ID!): CommunityComment
+}
+
+type ModerationResult {
+  isApproved: Boolean!
+  confidence: Float!
+  reason: String
+  categories: [String!]
+}
+
+# =============================================================================
+# SUBSCRIPTIONS
+# =============================================================================
+
+type Subscription {
+  # Real-time Notifications
+  onNotificationCreated(userId: ID!): Notification
+    @aws_subscribe(mutations: ["sendNotification"])
+  
+  # Community Updates
+  onPostCreated(groupId: ID!): CommunityPost
+    @aws_subscribe(mutations: ["createCommunityPost"])
+  
+  onCommentCreated(postId: ID!): CommunityComment
+    @aws_subscribe(mutations: ["createCommunityComment"])
+  
+  # Course Updates
+  onCourseUpdated(courseId: ID!): Course
+    @aws_subscribe(mutations: ["updateCourse"])
+  
+  # Mentorship Sessions
+  onSessionScheduled(userId: ID!): MentorshipSession
+    @aws_subscribe(mutations: ["createMentorshipSession"])
+}

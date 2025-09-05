@@ -1,0 +1,137 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-kalplaelearning-dev-123456-authRole",
+      "UnauthRoleName": "amplify-kalplaelearning-dev-123456-unauthRole",
+      "StackName": "amplify-kalplaelearning-dev-123456",
+      "StackId": "arn:aws:cloudformation:ap-south-1:112914241644:stack/amplify-kalplaelearning-dev-123456/abc123",
+      "AuthRoleArn": "arn:aws:iam::112914241644:role/amplify-kalplaelearning-dev-123456-authRole",
+      "UnauthRoleArn": "arn:aws:iam::112914241644:role/amplify-kalplaelearning-dev-123456-unauthRole",
+      "Region": "ap-south-1"
+    },
+    "categories": {
+      "auth": {
+        "kalplaauth": {
+          "userPoolId": "ap-south-1_XXXXXXXXX",
+          "userPoolWebClientId": "XXXXXXXXXXXXXXXXXXXXXXXXXX",
+          "identityPoolId": "ap-south-1:xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx",
+          "identityPoolName": "kalplaauth_identitypool_XXXXXXXXX",
+          "allowUnauthenticatedIdentities": false,
+          "authRoleArn": "arn:aws:iam::112914241644:role/amplify-kalplaelearning-dev-123456-authRole",
+          "authRoleName": "amplify-kalplaelearning-dev-123456-authRole",
+          "unauthRoleArn": "arn:aws:iam::112914241644:role/amplify-kalplaelearning-dev-123456-unauthRole",
+          "unauthRoleName": "amplify-kalplaelearning-dev-123456-unauthRole"
+        }
+      },
+      "api": {
+        "kalplaapi": {
+          "service": "AppSync",
+          "providerPlugin": "awscloudformation",
+          "output": {
+            "authConfig": {
+              "defaultAuthentication": {
+                "authenticationType": "AMAZON_COGNITO_USER_POOLS",
+                "userPoolConfig": {
+                  "userPoolId": "ap-south-1_XXXXXXXXX"
+                }
+              },
+              "additionalAuthenticationProviders": [
+                {
+                  "authenticationType": "API_KEY",
+                  "apiKeyConfig": {
+                    "apiKeyExpirationDays": 365,
+                    "description": "Public API Key for guest access"
+                  }
+                }
+              ]
+            },
+            "GraphQLAPIIdOutput": "XXXXXXXXXXXXXX",
+            "GraphQLAPIEndpointOutput": "https://XXXXXXXXXXXXXX.appsync-api.ap-south-1.amazonaws.com/graphql",
+            "GraphQLAPIKeyOutput": "da2-XXXXXXXXXXXXXXXXXXXXXXXXXX"
+          },
+          "lastPushTimeStamp": "2024-01-20T10:00:00.000Z"
+        }
+      },
+      "storage": {
+        "kalplastorage": {
+          "service": "S3",
+          "providerPlugin": "awscloudformation",
+          "output": {
+            "BucketName": "kalplaelearning-storage-XXXXXXXXX-dev",
+            "Region": "ap-south-1"
+          },
+          "lastPushTimeStamp": "2024-01-20T10:00:00.000Z"
+        }
+      },
+      "function": {
+        "gradeAssignmentPoints": {
+          "build": true,
+          "providerPlugin": "awscloudformation",
+          "service": "Lambda",
+          "dependsOn": [
+            {
+              "category": "api",
+              "resourceName": "kalplaapi",
+              "attributes": [
+                "GraphQLAPIIdOutput"
+              ]
+            }
+          ]
+        },
+        "joinVoiceChannel": {
+          "build": true,
+          "providerPlugin": "awscloudformation",
+          "service": "Lambda",
+          "dependsOn": [
+            {
+              "category": "api",
+              "resourceName": "kalplaapi",
+              "attributes": [
+                "GraphQLAPIIdOutput"
+              ]
+            }
+          ]
+        },
+        "contentModeration": {
+          "build": true,
+          "providerPlugin": "awscloudformation",
+          "service": "Lambda",
+          "dependsOn": [
+            {
+              "category": "api",
+              "resourceName": "kalplaapi",
+              "attributes": [
+                "GraphQLAPIIdOutput"
+              ]
+            }
+          ]
+        },
+        "sendNotification": {
+          "build": true,
+          "providerPlugin": "awscloudformation",
+          "service": "Lambda",
+          "dependsOn": [
+            {
+              "category": "api",
+              "resourceName": "kalplaapi",
+              "attributes": [
+                "GraphQLAPIIdOutput"
+              ]
+            }
+          ]
+        }
+      },
+      "notifications": {
+        "kalplanotifications": {
+          "service": "SNS",
+          "providerPlugin": "awscloudformation",
+          "output": {
+            "Name": "kalplanotifications-dev",
+            "Arn": "arn:aws:sns:ap-south-1:112914241644:kalplanotifications-dev",
+            "Region": "ap-south-1"
+          }
+        }
+      }
+    }
+  }
+}

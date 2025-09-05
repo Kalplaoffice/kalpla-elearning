@@ -1,0 +1,78 @@
+{
+  "version": "1",
+  "s3Config": {
+    "bucketName": "kalplaelearning-storage-XXXXXXXXX-dev",
+    "region": "ap-south-1",
+    "resourceName": "kalplastorage",
+    "bucketAccess": [
+      {
+        "level": "public",
+        "prefix": "public/",
+        "access": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ]
+      },
+      {
+        "level": "protected",
+        "prefix": "protected/{identity}/",
+        "access": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ]
+      },
+      {
+        "level": "private",
+        "prefix": "private/{identity}/",
+        "access": [
+          "create",
+          "read",
+          "update",
+          "delete"
+        ]
+      }
+    ],
+    "bucketPolicy": {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Sid": "PublicReadGetObject",
+          "Effect": "Allow",
+          "Principal": "*",
+          "Action": "s3:GetObject",
+          "Resource": "arn:aws:s3:::kalplaelearning-storage-XXXXXXXXX-dev/public/*"
+        }
+      ]
+    },
+    "cloudFrontDistribution": {
+      "distributionId": "XXXXXXXXXXXXXX",
+      "domainName": "dXXXXXXXXXXXXXX.cloudfront.net",
+      "originPath": "/public",
+      "customHeaders": [
+        {
+          "header": "Access-Control-Allow-Origin",
+          "value": "*"
+        },
+        {
+          "header": "Access-Control-Allow-Methods",
+          "value": "GET, HEAD, OPTIONS"
+        }
+      ]
+    },
+    "s3PublicPolicy": "Public_policy_XXXXXXXXX",
+    "s3PrivatePolicy": "Private_policy_XXXXXXXXX",
+    "s3ProtectedPolicy": "Protected_policy_XXXXXXXXX",
+    "s3UploadsPolicy": "Uploads_policy_XXXXXXXXX",
+    "s3ReadsPolicy": "Reads_policy_XXXXXXXXX",
+    "s3DeletesPolicy": "Deletes_policy_XXXXXXXXX",
+    "s3LambdaTrigger": {
+      "lambdaFunctionName": "kalplastorageTrigger",
+      "lambdaFunctionArn": "arn:aws:lambda:ap-south-1:112914241644:function:kalplastorageTrigger",
+      "lambdaFunctionRole": "kalplastorageTrigger_lambda_role"
+    }
+  }
+}
