@@ -1,0 +1,510 @@
+# Kalpla E-Learning Platform GraphQL Schema
+# Comprehensive schema for courses, community, mentorship, and more
+
+# Global authorization rule - will be updated for production
+input AMPLIFY { globalAuthRule: AuthRule = { allow: public } } # FOR TESTING ONLY!
+
+# User Management
+type User @model @auth(rules: [
+  { allow: owner, operations: [read, update, delete] },
+  { allow: groups, groups: ["Admins"], operations: [read, create, update, delete] },
+  { allow: groups, groups: ["Mentors"], operations: [read] }
+]) {
+  id: ID!
+  email: String! @index(name: "byEmail", queryField: "userByEmail")
+  name: String!
+  role: UserRole!
+  avatarUrl: String
+  bio: String
+  points: Int
+  level: Int
+  badges: [String]
+  isEmailVerified: Boolean
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  
+  # Relationships
+  enrollments: [Enrollment] @hasMany(indexName: "byUser")
+  assignments: [AssignmentSubmission] @hasMany(indexName: "byUser")
+  communityPosts: [CommunityPost] @hasMany(indexName: "byUser")
+  communityComments: [CommunityComment] @hasMany(indexName: "byUser")
+  communityMemberships: [CommunityMember] @hasMany(indexName: "byUser")
+  communityLikes: [CommunityLike] @hasMany(indexName: "byUser")
+  mentorshipSessions: [MentorshipSession] @hasMany(indexName: "byStudent")
+  mentorSessions: [MentorshipSession] @hasMany(indexName: "byMentor")
+  notifications: [Notification] @hasMany(indexName: "byUser")
+  payments: [Payment] @hasMany(indexName: "byUser")
+  subscriptions: [UserSubscription] @hasMany(indexName: "byUser")
+}
+
+enum UserRole {
+  STUDENT
+  MENTOR
+  ADMIN
+  MODERATOR
+}
+
+# Course Management
+type Course @model @auth(rules: [
+  { allow: groups, groups: ["Admins", "Mentors"], operations: [create, read, update, delete] },
+  { allow: public, operations: [read] }
+]) {
+  id: ID!
+  title: String!
+  description: String!
+  instructor: String!
+  instructorId: ID! @index(name: "byInstructor", queryField: "coursesByInstructor")
+  thumbnailUrl: String
+  price: Float!
+  isFree: Boolean
+  difficulty: DifficultyLevel!
+  duration: Int! # in minutes
+  rating: Float
+  totalRatings: Int
+  totalStudents: Int
+  isPublished: Boolean
+  publishedAt: AWSDateTime
+  tags: [String]
+  prerequisites: [String]
+  learningOutcomes: [String]
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  
+  # Relationships
+  modules: [Module] @hasMany(indexName: "byCourse")
+  enrollments: [Enrollment] @hasMany(indexName: "byCourse")
+  reviews: [CourseReview] @hasMany(indexName: "byCourse")
+  assignments: [Assignment] @hasMany(indexName: "byCourse")
+}
+
+enum DifficultyLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+type Module @model @auth(rules: [
+  { allow: groups, groups: ["Admins", "Mentors"], operations: [create, read, update, delete] },
+  { allow: public, operations: [read] }
+]) {
+  id: ID!
+  title: String!
+  description: String
+  courseId: ID! @index(name: "byCourse", sortKeyFields: ["order"])
+  order: Int!
+  isPublished: Boolean
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  
+  # Relationships
+  course: Course @belongsTo(fields: ["courseId"])
+  lessons: [Lesson] @hasMany(indexName: "byModule")
+}
+
+type Lesson @model @auth(rules: [
+  { allow: groups, groups: ["Admins", "Mentors"], operations: [create, read, update, delete] },
+  { allow: public, operations: [read] }
+]) {
+  id: ID!
+  title: String!
+  description: String
+  moduleId: ID! @index(name: "byModule", sortKeyFields: ["order"])
+  order: Int!
+  videoUrl: String
+  duration: Int! # in minutes
+  isFree: Boolean
+  isPublished: Boolean
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  
+  # Relationships
+  module: Module @belongsTo(fields: ["moduleId"])
+  resources: [LessonResource] @hasMany(indexName: "byLesson")
+}
+
+type LessonResource @model @auth(rules: [
+  { allow: groups, groups: ["Admins", "Mentors"], operations: [create, read, update, delete] },
+  { allow: public, operations: [read] }
+]) {
+  id: ID!
+  title: String!
+  type: ResourceType!
+  url: String!
+  lessonId: ID! @index(name: "byLesson")
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  
+  # Relationships
+  lesson: Lesson @belongsTo(fields: ["lessonId"])
+}
+
+enum ResourceType {
+  PDF
+  VIDEO
+  AUDIO
+  IMAGE
+  LINK
+  DOCUMENT
+}
+
+# Enrollment Management
+type Enrollment @model @auth(rules: [
+  { allow: owner, operations: [read] },
+  { allow: groups, groups: ["Admins", "Mentors"], operations: [read, create, update, delete] }
+]) {
+  id: ID!
+  userId: ID! @index(name: "byUser")
+  courseId: ID! @index(name: "byCourse")
+  enrolledAt: AWSDateTime!
+  progress: Float # percentage
+  completedAt: AWSDateTime
+  certificateUrl: String
+  isActive: Boolean
+  
+  # Relationships
+  user: User @belongsTo(fields: ["userId"])
+  course: Course @belongsTo(fields: ["courseId"])
+  progressRecords: [ProgressRecord] @hasMany(indexName: "byEnrollment")
+}
+
+type ProgressRecord @model @auth(rules: [
+  { allow: owner, operations: [read, create, update] },
+  { allow: groups, groups: ["Admins", "Mentors"], operations: [read, create, update, delete] }
+]) {
+  id: ID!
+  enrollmentId: ID! @index(name: "byEnrollment")
+  lessonId: ID!
+  completedAt: AWSDateTime!
+  timeSpent: Int # in minutes
+  score: Float # if it's a quiz/assignment
+  
+  # Relationships
+  enrollment: Enrollment @belongsTo(fields: ["enrollmentId"])
+}
+
+# Assignment Management
+type Assignment @model @auth(rules: [
+  { allow: groups, groups: ["Admins", "Mentors"], operations: [create, read, update, delete] },
+  { allow: public, operations: [read] }
+]) {
+  id: ID!
+  title: String!
+  description: String!
+  courseId: ID! @index(name: "byCourse")
+  dueDate: AWSDateTime
+  maxPoints: Float!
+  assignmentType: AssignmentType!
+  instructions: String
+  attachments: [String] # URLs to attached files
+  isPublished: Boolean
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  
+  # Relationships
+  course: Course @belongsTo(fields: ["courseId"])
+  submissions: [AssignmentSubmission] @hasMany(indexName: "byAssignment")
+}
+
+enum AssignmentType {
+  ESSAY
+  QUIZ
+  PROJECT
+  PRESENTATION
+  CODING
+  OTHER
+}
+
+type AssignmentSubmission @model @auth(rules: [
+  { allow: owner, operations: [read, create, update] },
+  { allow: groups, groups: ["Admins", "Mentors"], operations: [read, create, update, delete] }
+]) {
+  id: ID!
+  assignmentId: ID! @index(name: "byAssignment")
+  userId: ID! @index(name: "byUser")
+  content: String
+  attachments: [String] # URLs to submitted files
+  submittedAt: AWSDateTime!
+  grade: Float
+  feedback: String
+  status: SubmissionStatus!
+  gradedAt: AWSDateTime
+  gradedBy: ID
+  
+  # Relationships
+  assignment: Assignment @belongsTo(fields: ["assignmentId"])
+  user: User @belongsTo(fields: ["userId"])
+}
+
+enum SubmissionStatus {
+  DRAFT
+  SUBMITTED
+  GRADED
+  RETURNED
+}
+
+# Community Features
+type CommunityPost @model @auth(rules: [
+  { allow: owner, operations: [create, read, update, delete] },
+  { allow: groups, groups: ["Admins", "Moderators"], operations: [read, update, delete] },
+  { allow: public, operations: [read] }
+]) {
+  id: ID!
+  title: String!
+  content: String!
+  userId: ID! @index(name: "byUser")
+  channelId: ID! @index(name: "byChannel")
+  isPinned: Boolean
+  isLocked: Boolean
+  likes: Int
+  views: Int
+  tags: [String]
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  
+  # Relationships
+  user: User @belongsTo(fields: ["userId"])
+  channel: CommunityChannel @belongsTo(fields: ["channelId"])
+  comments: [CommunityComment] @hasMany(indexName: "byPost")
+  likesList: [CommunityLike] @hasMany(indexName: "byPost")
+}
+
+type CommunityComment @model @auth(rules: [
+  { allow: owner, operations: [create, read, update, delete] },
+  { allow: groups, groups: ["Admins", "Moderators"], operations: [read, update, delete] },
+  { allow: public, operations: [read] }
+]) {
+  id: ID!
+  content: String!
+  userId: ID! @index(name: "byUser")
+  postId: ID! @index(name: "byPost")
+  parentCommentId: ID @index(name: "byParentComment", sortKeyFields: ["createdAt"])
+  likes: Int
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  
+  # Relationships
+  user: User @belongsTo(fields: ["userId"])
+  post: CommunityPost @belongsTo(fields: ["postId"])
+  parentComment: CommunityComment @belongsTo(fields: ["parentCommentId"])
+  replies: [CommunityComment] @hasMany(indexName: "byParentComment")
+  likesList: [CommunityLike] @hasMany(indexName: "byComment")
+}
+
+type CommunityChannel @model @auth(rules: [
+  { allow: groups, groups: ["Admins", "Moderators"], operations: [create, read, update, delete] },
+  { allow: public, operations: [read] }
+]) {
+  id: ID!
+  name: String!
+  description: String
+  isPrivate: Boolean
+  memberCount: Int
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  
+  # Relationships
+  posts: [CommunityPost] @hasMany(indexName: "byChannel")
+  members: [CommunityMember] @hasMany(indexName: "byChannel")
+}
+
+type CommunityMember @model @auth(rules: [
+  { allow: owner, operations: [create, read, update, delete] },
+  { allow: groups, groups: ["Admins", "Moderators"], operations: [read, create, update, delete] }
+]) {
+  id: ID!
+  userId: ID! @index(name: "byUser")
+  channelId: ID! @index(name: "byChannel")
+  role: CommunityRole!
+  joinedAt: AWSDateTime!
+  
+  # Relationships
+  user: User @belongsTo(fields: ["userId"])
+  channel: CommunityChannel @belongsTo(fields: ["channelId"])
+}
+
+enum CommunityRole {
+  MEMBER
+  MODERATOR
+  ADMIN
+}
+
+type CommunityLike @model @auth(rules: [
+  { allow: owner, operations: [create, read, delete] },
+  { allow: groups, groups: ["Admins"], operations: [read, delete] }
+]) {
+  id: ID!
+  userId: ID! @index(name: "byUser")
+  postId: ID @index(name: "byPost")
+  commentId: ID @index(name: "byComment")
+  createdAt: AWSDateTime!
+  
+  # Relationships
+  user: User @belongsTo(fields: ["userId"])
+  post: CommunityPost @belongsTo(fields: ["postId"])
+  comment: CommunityComment @belongsTo(fields: ["commentId"])
+}
+
+# Mentorship Program
+type MentorshipSession @model @auth(rules: [
+  { allow: owner, operations: [read, update] },
+  { allow: groups, groups: ["Admins", "Mentors"], operations: [read, create, update, delete] }
+]) {
+  id: ID!
+  studentId: ID! @index(name: "byStudent")
+  mentorId: ID! @index(name: "byMentor")
+  scheduledAt: AWSDateTime!
+  duration: Int! # in minutes
+  status: SessionStatus!
+  meetingUrl: String
+  notes: String
+  feedback: String
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  
+  # Relationships
+  student: User @belongsTo(fields: ["studentId"])
+  mentor: User @belongsTo(fields: ["mentorId"])
+}
+
+enum SessionStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+# Course Reviews
+type CourseReview @model @auth(rules: [
+  { allow: owner, operations: [create, read, update, delete] },
+  { allow: groups, groups: ["Admins"], operations: [read, update, delete] },
+  { allow: public, operations: [read] }
+]) {
+  id: ID!
+  courseId: ID! @index(name: "byCourse")
+  userId: ID!
+  rating: Int! # 1-5 stars
+  title: String
+  content: String
+  isVerified: Boolean
+  helpfulVotes: Int
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  
+  # Relationships
+  course: Course @belongsTo(fields: ["courseId"])
+}
+
+# Notifications
+type Notification @model @auth(rules: [
+  { allow: owner, operations: [read, update] },
+  { allow: groups, groups: ["Admins"], operations: [create, read, update, delete] }
+]) {
+  id: ID!
+  userId: ID! @index(name: "byUser")
+  title: String!
+  message: String!
+  type: NotificationType!
+  isRead: Boolean
+  data: AWSJSON # Additional data for the notification
+  createdAt: AWSDateTime!
+  
+  # Relationships
+  user: User @belongsTo(fields: ["userId"])
+}
+
+enum NotificationType {
+  COURSE_UPDATE
+  ASSIGNMENT_DUE
+  MENTORSHIP_SESSION
+  COMMUNITY_POST
+  PAYMENT_SUCCESS
+  SYSTEM_ANNOUNCEMENT
+}
+
+# Payment Management
+type Payment @model @auth(rules: [
+  { allow: owner, operations: [read] },
+  { allow: groups, groups: ["Admins"], operations: [read, create, update, delete] }
+]) {
+  id: ID!
+  userId: ID! @index(name: "byUser")
+  amount: Float!
+  currency: String!
+  status: PaymentStatus!
+  paymentMethod: String
+  transactionId: String
+  description: String
+  metadata: AWSJSON
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  
+  # Relationships
+  user: User @belongsTo(fields: ["userId"])
+}
+
+enum PaymentStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+  CANCELLED
+}
+
+# Live Classes
+type LiveClass @model @auth(rules: [
+  { allow: groups, groups: ["Admins", "Mentors"], operations: [create, read, update, delete] },
+  { allow: public, operations: [read] }
+]) {
+  id: ID!
+  title: String!
+  description: String!
+  instructor: String!
+  instructorId: ID!
+  scheduledAt: AWSDateTime!
+  duration: Int! # in minutes
+  maxParticipants: Int
+  currentParticipants: Int
+  meetingUrl: String
+  recordingUrl: String
+  isLive: Boolean
+  isRecorded: Boolean
+  tags: [String]
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+}
+
+# Subscription Management
+type UserSubscription @model @auth(rules: [
+  { allow: owner, operations: [read, update] },
+  { allow: groups, groups: ["Admins"], operations: [read, create, update, delete] }
+]) {
+  id: ID!
+  userId: ID! @index(name: "byUser")
+  planType: SubscriptionPlan!
+  status: SubscriptionStatus!
+  startDate: AWSDateTime!
+  endDate: AWSDateTime
+  autoRenew: Boolean
+  createdAt: AWSDateTime!
+  updatedAt: AWSDateTime!
+  
+  # Relationships
+  user: User @belongsTo(fields: ["userId"])
+}
+
+enum SubscriptionPlan {
+  FREE
+  BASIC
+  PREMIUM
+  MENTORSHIP
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  SUSPENDED
+}

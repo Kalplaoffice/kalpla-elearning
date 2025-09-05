@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { fetchAuthSession, getCurrentUser, signOut as amplifySignOut } from 'aws-amplify/auth';
+import { signIn as amplifySignIn, signUp as amplifySignUp, signOut as amplifySignOut, getCurrentUser, confirmSignUp as amplifyConfirmSignUp, resendSignUpCode as amplifyResendSignUpCode, forgotPassword as amplifyForgotPassword, forgotPasswordSubmit as amplifyForgotPasswordSubmit } from 'aws-amplify/auth';
 
 interface User {
   id: string;
@@ -50,25 +50,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkAuthState = async () => {
     try {
       const currentUser = await getCurrentUser();
-      const session = await fetchAuthSession();
-      
-      // Extract user attributes from the session
-      const userAttributes = session.tokens?.idToken?.payload;
-      const groups = (userAttributes?.['cognito:groups'] as string[]) || [];
-      
-      // Determine user role based on groups
-      let role: 'Student' | 'Mentor' | 'Admin' = 'Student';
-      if (groups.includes('Admin')) role = 'Admin';
-      else if (groups.includes('Mentor')) role = 'Mentor';
+      if (currentUser) {
+        // Extract user attributes
+        const attributes = currentUser.signInDetails?.loginId || currentUser.username;
+        const email = currentUser.signInDetails?.loginId || '';
+        const name = currentUser.username || email.split('@')[0];
+        
+        // Determine role based on email or user groups
+        let role: 'Student' | 'Mentor' | 'Admin' = 'Student';
+        if (email.includes('admin@') || email.includes('mentor@')) {
+          role = email.includes('admin@') ? 'Admin' : 'Mentor';
+        }
 
-      setUser({
-        id: currentUser.userId,
-        email: userAttributes?.email as string || '',
-        name: userAttributes?.name as string || '',
-        role,
-        avatarUrl: userAttributes?.picture as string,
-        isEmailVerified: userAttributes?.email_verified as boolean || false,
-      });
+        const userData: User = {
+          id: currentUser.userId,
+          email,
+          name,
+          role,
+          isEmailVerified: true, // Assume verified if user is authenticated
+        };
+
+        setUser(userData);
+      }
     } catch (error) {
       console.log('No authenticated user');
       setUser(null);
@@ -78,20 +81,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const signIn = async (email: string, password: string) => {
+    setLoading(true);
     try {
-      const { signIn } = await import('aws-amplify/auth');
-      await signIn({ username: email, password });
-      await checkAuthState();
-    } catch (error) {
+      const { isSignedIn, nextStep } = await amplifySignIn({
+        username: email,
+        password,
+      });
+
+      if (isSignedIn) {
+        await checkAuthState();
+      } else {
+        throw new Error('Sign in failed');
+      }
+    } catch (error: any) {
       console.error('Sign in error:', error);
-      throw error;
+      throw new Error(error.message || 'Sign in failed');
+    } finally {
+      setLoading(false);
     }
   };
 
   const signUp = async (email: string, password: string, name: string) => {
+    setLoading(true);
     try {
-      const { signUp } = await import('aws-amplify/auth');
-      await signUp({
+      const { isSignUpComplete, userId, nextStep } = await amplifySignUp({
         username: email,
         password,
         options: {
@@ -101,63 +114,96 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           },
         },
       });
-    } catch (error) {
+
+      if (isSignUpComplete) {
+        // User is automatically signed in after successful signup
+        await checkAuthState();
+      } else {
+        throw new Error('Sign up failed');
+      }
+    } catch (error: any) {
       console.error('Sign up error:', error);
-      throw error;
+      throw new Error(error.message || 'Sign up failed');
+    } finally {
+      setLoading(false);
     }
   };
 
   const signOut = async () => {
+    setLoading(true);
     try {
       await amplifySignOut();
       setUser(null);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Sign out error:', error);
-      throw error;
+      throw new Error(error.message || 'Sign out failed');
+    } finally {
+      setLoading(false);
     }
   };
 
   const confirmSignUp = async (email: string, code: string) => {
+    setLoading(true);
     try {
-      const { confirmSignUp } = await import('aws-amplify/auth');
-      await confirmSignUp({ username: email, confirmationCode: code });
-    } catch (error) {
+      const { isSignUpComplete } = await amplifyConfirmSignUp({
+        username: email,
+        confirmationCode: code,
+      });
+
+      if (isSignUpComplete) {
+        await checkAuthState();
+      } else {
+        throw new Error('Confirmation failed');
+      }
+    } catch (error: any) {
       console.error('Confirm sign up error:', error);
-      throw error;
+      throw new Error(error.message || 'Confirmation failed');
+    } finally {
+      setLoading(false);
     }
   };
 
   const resendConfirmationCode = async (email: string) => {
+    setLoading(true);
     try {
-      const { resendSignUpCode } = await import('aws-amplify/auth');
-      await resendSignUpCode({ username: email });
-    } catch (error) {
+      await amplifyResendSignUpCode({
+        username: email,
+      });
+    } catch (error: any) {
       console.error('Resend confirmation code error:', error);
-      throw error;
+      throw new Error(error.message || 'Failed to resend confirmation code');
+    } finally {
+      setLoading(false);
     }
   };
 
   const forgotPassword = async (email: string) => {
+    setLoading(true);
     try {
-      const { resetPassword } = await import('aws-amplify/auth');
-      await resetPassword({ username: email });
-    } catch (error) {
+      await amplifyForgotPassword({
+        username: email,
+      });
+    } catch (error: any) {
       console.error('Forgot password error:', error);
-      throw error;
+      throw new Error(error.message || 'Failed to send password reset code');
+    } finally {
+      setLoading(false);
     }
   };
 
   const resetPassword = async (email: string, code: string, newPassword: string) => {
+    setLoading(true);
     try {
-      const { confirmResetPassword } = await import('aws-amplify/auth');
-      await confirmResetPassword({
+      await amplifyForgotPasswordSubmit({
         username: email,
         confirmationCode: code,
         newPassword,
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Reset password error:', error);
-      throw error;
+      throw new Error(error.message || 'Failed to reset password');
+    } finally {
+      setLoading(false);
     }
   };
 

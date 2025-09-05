@@ -1,14 +1,109 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import { useAuth } from '@/contexts/AuthContext';
+import { courseAPI, enrollmentAPI, analyticsAPI } from '@/lib/api';
+
+interface Course {
+  id: string;
+  title: string;
+  instructor?: string;
+  progress?: number;
+  nextLesson?: string;
+  thumbnailUrl?: string;
+}
+
+interface Assignment {
+  id: string;
+  title: string;
+  course: string;
+  due: string;
+  status: string;
+}
+
+interface DashboardStats {
+  activeCourses: number;
+  assignments: number;
+  points: number;
+  certificates: number;
+  overallProgress: number;
+  completed: number;
+  inProgress: number;
+}
 
 export default function StudentDashboard() {
   const { user } = useAuth();
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [stats, setStats] = useState<DashboardStats>({
+    activeCourses: 0,
+    assignments: 0,
+    points: 0,
+    certificates: 0,
+    overallProgress: 0,
+    completed: 0,
+    inProgress: 0
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (user?.userId) {
+      fetchDashboardData();
+    }
+  }, [user?.userId]);
+
+  const fetchDashboardData = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch user enrollments
+      const enrollments = await enrollmentAPI.getUserEnrollments(user?.userId || '');
+      
+      // Get course details for enrolled courses
+      const coursePromises = enrollments.map(enrollment => 
+        courseAPI.getCourseById(enrollment.courseId)
+      );
+      const enrolledCourses = await Promise.all(coursePromises);
+      
+      // Transform to dashboard format
+      const dashboardCourses = enrolledCourses.map((course, index) => ({
+        id: course?.id || '',
+        title: course?.title || 'Unknown Course',
+        instructor: course?.instructor || 'Unknown Instructor',
+        progress: enrollments[index]?.progress || 0,
+        nextLesson: 'Continue Learning',
+        thumbnailUrl: course?.thumbnailUrl
+      }));
+
+      setCourses(dashboardCourses);
+
+      // Calculate stats
+      const activeCourses = enrollments.length;
+      const completedCourses = enrollments.filter(e => e.progress === 100).length;
+      const overallProgress = activeCourses > 0 ? 
+        enrollments.reduce((sum, e) => sum + (e.progress || 0), 0) / activeCourses : 0;
+
+      setStats({
+        activeCourses,
+        assignments: 0, // TODO: Implement assignment fetching
+        points: Math.floor(overallProgress * 100), // Mock points calculation
+        certificates: completedCourses,
+        overallProgress: Math.round(overallProgress),
+        completed: completedCourses,
+        inProgress: activeCourses - completedCourses
+      });
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <ProtectedRoute requiredRole="Student">
@@ -34,7 +129,9 @@ export default function StudentDashboard() {
                   </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Active Courses</p>
-                    <p className="text-2xl font-bold text-gray-900">3</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {loading ? '...' : stats.activeCourses}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -48,7 +145,9 @@ export default function StudentDashboard() {
                   </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Assignments</p>
-                    <p className="text-2xl font-bold text-gray-900">12</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {loading ? '...' : stats.assignments}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -62,7 +161,9 @@ export default function StudentDashboard() {
                   </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Points</p>
-                    <p className="text-2xl font-bold text-gray-900">2,450</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {loading ? '...' : stats.points.toLocaleString()}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -76,7 +177,9 @@ export default function StudentDashboard() {
                   </div>
                   <div className="ml-4">
                     <p className="text-sm font-medium text-gray-600">Certificates</p>
-                    <p className="text-2xl font-bold text-gray-900">5</p>
+                    <p className="text-2xl font-bold text-gray-900">
+                      {loading ? '...' : stats.certificates}
+                    </p>
                   </div>
                 </div>
               </CardContent>
@@ -99,26 +202,22 @@ export default function StudentDashboard() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {[
-                      {
-                        title: "React Fundamentals",
-                        progress: 75,
-                        instructor: "Sarah Johnson",
-                        nextLesson: "State Management"
-                      },
-                      {
-                        title: "Node.js Backend Development",
-                        progress: 45,
-                        instructor: "Mike Chen",
-                        nextLesson: "Database Integration"
-                      },
-                      {
-                        title: "UI/UX Design Principles",
-                        progress: 90,
-                        instructor: "Emma Davis",
-                        nextLesson: "Final Project"
-                      }
-                    ].map((course, index) => (
+                    {loading ? (
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#FF804B] mx-auto mb-4"></div>
+                        <p className="text-gray-600">Loading courses...</p>
+                      </div>
+                    ) : courses.length === 0 ? (
+                      <div className="text-center py-8">
+                        <p className="text-gray-600 mb-4">No courses enrolled yet</p>
+                        <Link href="/courses">
+                          <Button className="bg-[#FF804B] hover:bg-[#FF804B]/90">
+                            Browse Courses
+                          </Button>
+                        </Link>
+                      </div>
+                    ) : (
+                      courses.map((course, index) => (
                       <div key={index} className="flex items-center space-x-4 p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                         <div className="w-12 h-12 bg-gradient-to-r from-[#2C4E41] to-[#FF804B] rounded-lg flex items-center justify-center">
                           <span className="text-white font-bold text-sm">R</span>
@@ -247,19 +346,22 @@ export default function StudentDashboard() {
                     <div>
                       <div className="flex justify-between text-sm mb-1">
                         <span>Overall Progress</span>
-                        <span>68%</span>
+                        <span>{stats.overallProgress}%</span>
                       </div>
                       <div className="w-full bg-gray-200 rounded-full h-2">
-                        <div className="bg-gradient-to-r from-[#2C4E41] to-[#FF804B] h-2 rounded-full" style={{ width: '68%' }}></div>
+                        <div 
+                          className="bg-gradient-to-r from-[#2C4E41] to-[#FF804B] h-2 rounded-full transition-all duration-300" 
+                          style={{ width: `${stats.overallProgress}%` }}
+                        ></div>
                       </div>
                     </div>
                     <div className="grid grid-cols-2 gap-4 text-center">
                       <div className="p-3 bg-green-50 rounded-lg">
-                        <p className="text-2xl font-bold text-green-600">12</p>
+                        <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
                         <p className="text-sm text-gray-600">Completed</p>
                       </div>
                       <div className="p-3 bg-blue-50 rounded-lg">
-                        <p className="text-2xl font-bold text-blue-600">5</p>
+                        <p className="text-2xl font-bold text-blue-600">{stats.inProgress}</p>
                         <p className="text-sm text-gray-600">In Progress</p>
                       </div>
                     </div>

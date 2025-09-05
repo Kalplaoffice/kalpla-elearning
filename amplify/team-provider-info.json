@@ -1,0 +1,36 @@
+{
+  "dev": {
+    "awscloudformation": {
+      "AuthRoleName": "amplify-kalplaelearning-dev-622ab-authRole",
+      "UnauthRoleArn": "arn:aws:iam::112914241644:role/amplify-kalplaelearning-dev-622ab-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::112914241644:role/amplify-kalplaelearning-dev-622ab-authRole",
+      "Region": "ap-south-1",
+      "DeploymentBucketName": "amplify-kalplaelearning-dev-622ab-deployment",
+      "UnauthRoleName": "amplify-kalplaelearning-dev-622ab-unauthRole",
+      "StackName": "amplify-kalplaelearning-dev-622ab",
+      "StackId": "arn:aws:cloudformation:ap-south-1:112914241644:stack/amplify-kalplaelearning-dev-622ab/77d52fc0-8a8c-11f0-81fd-0224e0f27f87",
+      "AmplifyAppId": "dxvelyhtqguvs"
+    },
+    "categories": {
+      "auth": {
+        "kalplaelearninga4785467": {}
+      },
+      "function": {
+        "kalplaelearning0db8ac32": {
+          "deploymentBucketName": "amplify-kalplaelearning-dev-622ab-deployment",
+          "s3Key": "amplify-builds/kalplaelearning0db8ac32-5170464435626e73686c-build.zip"
+        },
+        "S3Trigger1be0f1a2": {
+          "deploymentBucketName": "amplify-kalplaelearning-dev-622ab-deployment",
+          "s3Key": "amplify-builds/S3Trigger1be0f1a2-724f7763677167653532-build.zip"
+        }
+      },
+      "api": {
+        "kalplaelearning": {}
+      },
+      "storage": {
+        "kalpla123": {}
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "resourceName": "kalpla123",
+  "policyUUID": "e635f9ab",
+  "bucketName": "kalpla-drive",
+  "storageAccess": "auth",
+  "guestAccess": [],
+  "authAccess": [
+    "CREATE_AND_UPDATE",
+    "READ",
+    "DELETE"
+  ],
+  "triggerFunction": "S3Trigger1be0f1a2",
+  "groupAccess": {}
+}

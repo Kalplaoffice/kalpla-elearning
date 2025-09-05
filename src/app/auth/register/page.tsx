@@ -50,6 +50,10 @@ export default function RegisterPage() {
     try {
       await signUp(formData.email, formData.password, formData.name);
       setSuccess(true);
+      // Auto-redirect to dashboard after 3 seconds
+      setTimeout(() => {
+        router.push('/dashboard/student');
+      }, 3000);
     } catch (err: any) {
       setError(err.message || 'An error occurred during registration');
     } finally {
@@ -66,20 +70,27 @@ export default function RegisterPage() {
               <div className="mx-auto w-12 h-12 bg-green-500 rounded-full flex items-center justify-center mb-4">
                 <span className="text-white font-bold text-xl">✓</span>
               </div>
-              <CardTitle className="text-2xl font-bold text-gray-900">Check Your Email</CardTitle>
+              <CardTitle className="text-2xl font-bold text-gray-900">Account Created!</CardTitle>
               <CardDescription>
-                We've sent a verification code to {formData.email}
+                Welcome to Kalpla, {formData.name}! Your account has been created successfully.
               </CardDescription>
             </CardHeader>
             <CardContent className="text-center">
               <p className="text-sm text-gray-600 mb-6">
-                Please check your email and click the verification link to activate your account.
+                You can now access all features of the platform. Start your learning journey today!
               </p>
-              <Link href="/auth/login">
-                <Button className="w-full">
-                  Back to Sign In
-                </Button>
-              </Link>
+              <div className="space-y-3">
+                <Link href="/dashboard/student">
+                  <Button className="w-full">
+                    Go to Dashboard
+                  </Button>
+                </Link>
+                <Link href="/courses">
+                  <Button variant="outline" className="w-full">
+                    Browse Courses
+                  </Button>
+                </Link>
+              </div>
             </CardContent>
           </Card>
         </div>
