@@ -38,7 +38,7 @@ interface DashboardStats {
 }
 
 export default function StudentDashboard() {
-  const { user } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const [courses, setCourses] = useState<Course[]>([]);
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [stats, setStats] = useState<DashboardStats>({
@@ -50,17 +50,27 @@ export default function StudentDashboard() {
     completed: 0,
     inProgress: 0
   });
-  const [loading, setLoading] = useState(true);
+  const [dataLoading, setDataLoading] = useState(true);
 
   useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      window.location.href = '/auth/login';
+      return;
+    }
+    
+    if (!loading && isAuthenticated && user?.role !== 'Student') {
+      window.location.href = '/dashboard';
+      return;
+    }
+    
     if (user?.userId) {
       fetchDashboardData();
     }
-  }, [user?.userId]);
+  }, [user?.userId, isAuthenticated, user, loading]);
 
   const fetchDashboardData = async () => {
     try {
-      setLoading(true);
+      setDataLoading(true);
       
       // Fetch user enrollments
       const enrollments = await enrollmentAPI.getUserEnrollments(user?.userId || '');
@@ -102,9 +112,32 @@ export default function StudentDashboard() {
     } catch (error) {
       console.error('Error fetching dashboard data:', error);
     } finally {
-      setLoading(false);
+      setDataLoading(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 bg-gradient-to-r from-[#2C4E41] to-[#FF804B] rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading student dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || user?.role !== 'Student') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
+          <p className="text-gray-600 mb-4">You need student permissions to access this dashboard</p>
+          <a href="/dashboard" className="text-[#FF804B] hover:underline">Go to Dashboard</a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ProtectedRoute requiredRole="Student">

@@ -39,8 +39,31 @@ const quickActions = [
 ];
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
+  const { user, isAuthenticated, loading } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 bg-gradient-to-r from-[#2C4E41] to-[#FF804B] rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading admin dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated || user?.role !== 'Admin') {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Access Denied</h2>
+          <p className="text-gray-600 mb-4">You need admin permissions to access this dashboard</p>
+          <a href="/dashboard" className="text-[#FF804B] hover:underline">Go to Dashboard</a>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <ProtectedRoute allowedRoles={['Admin']}>
