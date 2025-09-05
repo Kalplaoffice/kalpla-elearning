@@ -159,12 +159,21 @@ export default function DebugAuth() {
             </CardHeader>
             <CardContent className="space-y-3">
               <Button
-                onClick={() => handleTestUser('admin@kalpla.com', 'Admin123!', 'Admin User')}
+                onClick={() => handleTestUser('learncapacademy@gmail.com', 'Admin123!', 'LearnCap Academy Admin')}
                 disabled={loading}
                 className="w-full justify-start"
                 variant="outline"
               >
-                👨‍💼 Admin User (admin@kalpla.com)
+                👨‍💼 LearnCap Academy Admin (learncapacademy@gmail.com)
+              </Button>
+              
+              <Button
+                onClick={() => handleTestUser('admin@kalpla.com', 'Admin123!', 'Test Admin User')}
+                disabled={loading}
+                className="w-full justify-start"
+                variant="outline"
+              >
+                👨‍💼 Test Admin User (admin@kalpla.com)
               </Button>
               
               <Button

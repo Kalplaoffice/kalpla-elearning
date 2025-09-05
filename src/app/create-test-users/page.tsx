@@ -10,12 +10,22 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const testUsers = [
   {
-    email: 'admin@kalpla.com',
+    email: 'learncapacademy@gmail.com',
     password: 'Admin123!',
-    name: 'Admin User',
+    name: 'LearnCap Academy Admin',
     role: 'Admin',
     membershipType: 'admin',
-    description: 'Full platform administrator with access to all features',
+    description: 'Primary admin account with full platform access',
+    icon: '👨‍💼',
+    color: 'bg-red-100 border-red-300 text-red-800'
+  },
+  {
+    email: 'admin@kalpla.com',
+    password: 'Admin123!',
+    name: 'Test Admin User',
+    role: 'Admin',
+    membershipType: 'admin',
+    description: 'Test admin account for development',
     icon: '👨‍💼',
     color: 'bg-red-100 border-red-300 text-red-800'
   },

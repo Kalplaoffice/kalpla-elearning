@@ -20,6 +20,15 @@ export interface UserRoleInfo {
 export function getUserRoleFromEmail(email: string): UserRoleInfo {
   const emailLower = email.toLowerCase();
   
+  // Specific admin email
+  if (emailLower === 'learncapacademy@gmail.com') {
+    return {
+      role: 'Admin',
+      membershipType: 'admin',
+      subscriptionStatus: 'active'
+    };
+  }
+  
   if (emailLower.includes('admin@')) {
     return {
       role: 'Admin',

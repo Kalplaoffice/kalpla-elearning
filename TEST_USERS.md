@@ -4,28 +4,35 @@ This document contains test user accounts for different roles in the Kalpla e-le
 
 ## 🔐 Test User Credentials
 
-### 1. 👨‍💼 Admin User
+### 1. 👨‍💼 LearnCap Academy Admin (Primary Admin)
+- **Email**: `learncapacademy@gmail.com`
+- **Password**: `Admin123!`
+- **Role**: Admin
+- **Permissions**: Full platform access, user management, course management, analytics
+- **Features**: Can access admin dashboard, manage all users, create/edit courses, view analytics
+
+### 2. 👨‍💼 Test Admin User
 - **Email**: `admin@kalpla.com`
 - **Password**: `Admin123!`
 - **Role**: Admin
 - **Permissions**: Full platform access, user management, course management, analytics
 - **Features**: Can access admin dashboard, manage all users, create/edit courses, view analytics
 
-### 2. 🎓 Regular Student
+### 3. 🎓 Regular Student
 - **Email**: `student@kalpla.com`
 - **Password**: `Student123!`
 - **Role**: Student
 - **Permissions**: Course access, assignments, basic community features
 - **Features**: Can enroll in courses, submit assignments, access student dashboard
 
-### 3. 👨‍🏫 Instructor
+### 4. 👨‍🏫 Instructor
 - **Email**: `instructor@kalpla.com`
 - **Password**: `Instructor123!`
 - **Role**: Instructor
 - **Permissions**: Course creation, student management, content upload
 - **Features**: Can create courses, manage enrolled students, upload content
 
-### 4. 💎 12-Month Membership Student
+### 5. 💎 12-Month Membership Student
 - **Email**: `premium@kalpla.com`
 - **Password**: `Premium123!`
 - **Role**: Student (with premium membership)
