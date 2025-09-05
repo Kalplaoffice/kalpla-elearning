@@ -3,12 +3,12 @@
 import Link from 'next/link';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthSafe } from '@/contexts/AuthContext';
 import { Badge } from '@/components/ui/badge';
 
 export default function Navbar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, isAuthenticated, signOut } = useAuth();
+  const { user, isAuthenticated, signOut } = useAuthSafe();
 
   return (
     <nav className="bg-white/95 backdrop-blur-md shadow-lg sticky top-0 z-50 border-b border-gray-100">

@@ -11,7 +11,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Prevent hydration mismatch by not rendering auth context on server
+  // Always render children, but only wrap with AuthProvider after mount
   if (!mounted) {
     return <>{children}</>;
   }

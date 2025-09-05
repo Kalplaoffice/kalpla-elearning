@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { signIn as amplifySignIn, signUp as amplifySignUp, signOut as amplifySignOut, getCurrentUser, confirmSignUp as amplifyConfirmSignUp, resendSignUpCode as amplifyResendSignUpCode, resetPassword as amplifyResetPassword, confirmResetPassword as amplifyConfirmResetPassword } from 'aws-amplify/auth';
-import { getUserRoleInfo, UserRoleInfo } from '@/lib/roleManager';
+import { getUserRoleInfo } from '@/lib/roleManager';
 
 interface User {
   id: string;
@@ -28,7 +28,7 @@ interface AuthContextType {
   resetPassword: (email: string, code: string, newPassword: string) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+export const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
@@ -36,6 +36,23 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
+};
+
+// Safe version that doesn't throw an error
+export const useAuthSafe = () => {
+  const context = useContext(AuthContext);
+  return context || {
+    user: null,
+    loading: true,
+    isAuthenticated: false,
+    signIn: async () => {},
+    signUp: async () => {},
+    signOut: async () => {},
+    confirmSignUp: async () => {},
+    resendConfirmationCode: async () => {},
+    forgotPassword: async () => {},
+    resetPassword: async () => {},
+  };
 };
 
 interface AuthProviderProps {
@@ -62,20 +79,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Get role information using the role manager
         const roleInfo = getUserRoleInfo(email, userId);
 
-        const userData: User = {
-          id: userId,
-          email,
-          name,
-          role: roleInfo.role,
-          membershipType: roleInfo.membershipType,
-          subscriptionStatus: roleInfo.subscriptionStatus,
-          isEmailVerified: currentUser.attributes?.email_verified === 'true' || false,
-        };
+                            const userData: User = {
+                      id: userId,
+                      email,
+                      name,
+                      role: roleInfo.role,
+                      membershipType: roleInfo.membershipType,
+                      subscriptionStatus: roleInfo.subscriptionStatus,
+                      isEmailVerified: (currentUser as { attributes?: { email_verified?: string } }).attributes?.email_verified === 'true' || false,
+                    };
 
         setUser(userData);
       }
     } catch (error) {
-      console.log('No authenticated user');
+      console.log('No authenticated user:', error);
       setUser(null);
     } finally {
       setLoading(false);
@@ -106,27 +123,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           throw new Error(`Sign in incomplete. Next step: ${nextStep?.signInStep || 'Unknown'}`);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Sign in error:', error);
       
       // Provide more specific error messages
-      if (error.name === 'NotAuthorizedException') {
+      const errorObj = error as { name?: string; message?: string };
+      if (errorObj.name === 'NotAuthorizedException') {
         throw new Error('Invalid email or password. Please check your credentials.');
-      } else if (error.name === 'UserNotConfirmedException') {
+      } else if (errorObj.name === 'UserNotConfirmedException') {
         throw new Error('Please check your email and confirm your account before signing in.');
-      } else if (error.name === 'UserNotFoundException') {
+      } else if (errorObj.name === 'UserNotFoundException') {
         throw new Error('No account found with this email address. Please sign up first.');
-      } else if (error.name === 'TooManyRequestsException') {
+      } else if (errorObj.name === 'TooManyRequestsException') {
         throw new Error('Too many sign-in attempts. Please try again later.');
       } else {
-        throw new Error(error.message || 'Sign in failed. Please try again.');
+        throw new Error(errorObj.message || 'Sign in failed. Please try again.');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const signUp = async (email: string, password: string, name: string, role: string = 'Student', membershipType: string = 'basic') => {
+  const signUp = async (email: string, password: string, name: string, _role: string = 'Student', _membershipType: string = 'basic') => {
     setLoading(true);
     try {
       const { isSignUpComplete, userId, nextStep } = await amplifySignUp({
@@ -143,9 +161,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('Sign up result:', { isSignUpComplete, userId, nextStep });
 
       if (isSignUpComplete) {
-        // Store role information locally using the role manager
-        const roleInfo = getUserRoleInfo(email, userId);
-        
         // User is automatically signed in after successful signup
         await checkAuthState();
       } else {
@@ -156,20 +171,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           throw new Error(`Sign up incomplete. Next step: ${nextStep?.signUpStep || 'Unknown'}`);
         }
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Sign up error:', error);
       
       // Provide more specific error messages
-      if (error.name === 'UsernameExistsException') {
+      const errorObj = error as { name?: string; message?: string };
+      if (errorObj.name === 'UsernameExistsException') {
         throw new Error('An account with this email already exists. Please sign in instead.');
-      } else if (error.name === 'InvalidPasswordException') {
+      } else if (errorObj.name === 'InvalidPasswordException') {
         throw new Error('Password does not meet requirements. Please use at least 8 characters with uppercase, lowercase, numbers, and special characters.');
-      } else if (error.name === 'InvalidParameterException') {
+      } else if (errorObj.name === 'InvalidParameterException') {
         throw new Error('Invalid email format. Please enter a valid email address.');
-      } else if (error.name === 'TooManyRequestsException') {
+      } else if (errorObj.name === 'TooManyRequestsException') {
         throw new Error('Too many sign-up attempts. Please try again later.');
       } else {
-        throw new Error(error.message || 'Sign up failed. Please try again.');
+        throw new Error(errorObj.message || 'Sign up failed. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -181,9 +197,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       await amplifySignOut();
       setUser(null);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Sign out error:', error);
-      throw new Error(error.message || 'Sign out failed');
+      const errorObj = error as { message?: string };
+      throw new Error(errorObj.message || 'Sign out failed');
     } finally {
       setLoading(false);
     }
@@ -202,9 +219,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       } else {
         throw new Error('Confirmation failed');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Confirm sign up error:', error);
-      throw new Error(error.message || 'Confirmation failed');
+      const errorObj = error as { message?: string };
+      throw new Error(errorObj.message || 'Confirmation failed');
     } finally {
       setLoading(false);
     }
@@ -216,9 +234,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await amplifyResendSignUpCode({
         username: email,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Resend confirmation code error:', error);
-      throw new Error(error.message || 'Failed to resend confirmation code');
+      const errorObj = error as { message?: string };
+      throw new Error(errorObj.message || 'Failed to resend confirmation code');
     } finally {
       setLoading(false);
     }
@@ -230,9 +249,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       await amplifyResetPassword({
         username: email,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Forgot password error:', error);
-      throw new Error(error.message || 'Failed to send password reset code');
+      const errorObj = error as { message?: string };
+      throw new Error(errorObj.message || 'Failed to send password reset code');
     } finally {
       setLoading(false);
     }
@@ -246,9 +266,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         confirmationCode: code,
         newPassword,
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Reset password error:', error);
-      throw new Error(error.message || 'Failed to reset password');
+      const errorObj = error as { message?: string };
+      throw new Error(errorObj.message || 'Failed to reset password');
     } finally {
       setLoading(false);
     }

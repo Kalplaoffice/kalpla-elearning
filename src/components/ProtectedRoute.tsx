@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/contexts/AuthContext';
+import { useAuthSafe } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -20,7 +20,7 @@ export default function ProtectedRoute({
   allowedRoles,
   fallback 
 }: ProtectedRouteProps) {
-  const { user, isAuthenticated, loading } = useAuth();
+  const { user, isAuthenticated, loading } = useAuthSafe();
   const router = useRouter();
 
   useEffect(() => {
