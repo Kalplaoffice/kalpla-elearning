@@ -68,11 +68,20 @@ export default function CreateTestUsers() {
         }
       }));
     } catch (error: any) {
+      // Handle specific error cases
+      let message = error.message || 'Failed to create user';
+      
+      if (error.message?.includes('already exists')) {
+        message = 'User already exists. You can use these credentials to sign in.';
+      } else if (error.message?.includes('email and confirm')) {
+        message = 'User created! Please check email for verification before signing in.';
+      }
+      
       setResults(prev => ({
         ...prev,
         [user.email]: {
-          success: false,
-          message: error.message || 'Failed to create user'
+          success: error.message?.includes('already exists') || error.message?.includes('email and confirm'),
+          message: message
         }
       }));
     } finally {

@@ -90,14 +90,37 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         password,
       });
 
+      console.log('Sign in result:', { isSignedIn, nextStep });
+
       if (isSignedIn) {
         await checkAuthState();
       } else {
-        throw new Error('Sign in failed');
+        // Handle different sign-in steps
+        if (nextStep?.signInStep === 'CONFIRM_SIGN_UP') {
+          throw new Error('Please check your email and confirm your account before signing in.');
+        } else if (nextStep?.signInStep === 'RESET_PASSWORD') {
+          throw new Error('Password reset required. Please use the forgot password feature.');
+        } else if (nextStep?.signInStep === 'CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED') {
+          throw new Error('Please set a new password. Check your email for instructions.');
+        } else {
+          throw new Error(`Sign in incomplete. Next step: ${nextStep?.signInStep || 'Unknown'}`);
+        }
       }
     } catch (error: any) {
       console.error('Sign in error:', error);
-      throw new Error(error.message || 'Sign in failed');
+      
+      // Provide more specific error messages
+      if (error.name === 'NotAuthorizedException') {
+        throw new Error('Invalid email or password. Please check your credentials.');
+      } else if (error.name === 'UserNotConfirmedException') {
+        throw new Error('Please check your email and confirm your account before signing in.');
+      } else if (error.name === 'UserNotFoundException') {
+        throw new Error('No account found with this email address. Please sign up first.');
+      } else if (error.name === 'TooManyRequestsException') {
+        throw new Error('Too many sign-in attempts. Please try again later.');
+      } else {
+        throw new Error(error.message || 'Sign in failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -117,6 +140,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         },
       });
 
+      console.log('Sign up result:', { isSignUpComplete, userId, nextStep });
+
       if (isSignUpComplete) {
         // Store role information locally using the role manager
         const roleInfo = getUserRoleInfo(email, userId);
@@ -124,11 +149,28 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // User is automatically signed in after successful signup
         await checkAuthState();
       } else {
-        throw new Error('Sign up failed');
+        // Handle different sign-up steps
+        if (nextStep?.signUpStep === 'CONFIRM_SIGN_UP') {
+          throw new Error('Please check your email and confirm your account to complete registration.');
+        } else {
+          throw new Error(`Sign up incomplete. Next step: ${nextStep?.signUpStep || 'Unknown'}`);
+        }
       }
     } catch (error: any) {
       console.error('Sign up error:', error);
-      throw new Error(error.message || 'Sign up failed');
+      
+      // Provide more specific error messages
+      if (error.name === 'UsernameExistsException') {
+        throw new Error('An account with this email already exists. Please sign in instead.');
+      } else if (error.name === 'InvalidPasswordException') {
+        throw new Error('Password does not meet requirements. Please use at least 8 characters with uppercase, lowercase, numbers, and special characters.');
+      } else if (error.name === 'InvalidParameterException') {
+        throw new Error('Invalid email format. Please enter a valid email address.');
+      } else if (error.name === 'TooManyRequestsException') {
+        throw new Error('Too many sign-up attempts. Please try again later.');
+      } else {
+        throw new Error(error.message || 'Sign up failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
