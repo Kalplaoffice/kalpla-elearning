@@ -122,10 +122,10 @@ export default function CoursesPage() {
             <input
               type="text"
               placeholder="Search courses..."
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF804B] focus:border-transparent"
             />
           </div>
-          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF804B] focus:border-transparent">
             <option>Sort by Popularity</option>
             <option>Sort by Price</option>
             <option>Sort by Rating</option>
@@ -144,7 +144,7 @@ export default function CoursesPage() {
                   className="w-full h-full object-cover"
                 />
                 <div className="absolute top-2 right-2">
-                  <span className="bg-blue-600 text-white px-2 py-1 rounded text-sm font-medium">
+                  <span className="bg-[#FF804B] text-white px-2 py-1 rounded text-sm font-medium">
                     {course.difficulty}
                   </span>
                 </div>

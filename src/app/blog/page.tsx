@@ -132,7 +132,7 @@ export default function BlogPage() {
               </div>
               <div className="md:w-1/2 p-8">
                 <div className="flex items-center space-x-2 mb-4">
-                  <span className="bg-blue-100 text-blue-800 text-sm px-2 py-1 rounded">
+                  <span className="bg-[#FF804B]/10 text-[#FF804B] text-sm px-2 py-1 rounded">
                     {blogPosts[0].tags[0]}
                   </span>
                   <span className="text-gray-500 text-sm">{blogPosts[0].readTime}</span>

@@ -4,7 +4,7 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20">
+      <div className="bg-gradient-to-r from-[#2C4E41] to-[#FF804B] text-white py-20">
         <div className="container mx-auto px-4 text-center">
           <h1 className="text-5xl font-bold mb-6">About Kalpla</h1>
           <p className="text-xl max-w-3xl mx-auto">
@@ -47,19 +47,19 @@ export default function AboutPage() {
         {/* Stats */}
         <div className="grid md:grid-cols-4 gap-8 mb-16">
           <div className="text-center">
-            <div className="text-4xl font-bold text-blue-600 mb-2">50K+</div>
+            <div className="text-4xl font-bold text-[#FF804B] mb-2">50K+</div>
             <div className="text-gray-600">Students Worldwide</div>
           </div>
           <div className="text-center">
-            <div className="text-4xl font-bold text-blue-600 mb-2">500+</div>
+            <div className="text-4xl font-bold text-[#FF804B] mb-2">500+</div>
             <div className="text-gray-600">Expert Instructors</div>
           </div>
           <div className="text-center">
-            <div className="text-4xl font-bold text-blue-600 mb-2">1000+</div>
+            <div className="text-4xl font-bold text-[#FF804B] mb-2">1000+</div>
             <div className="text-gray-600">Courses Available</div>
           </div>
           <div className="text-center">
-            <div className="text-4xl font-bold text-blue-600 mb-2">95%</div>
+            <div className="text-4xl font-bold text-[#FF804B] mb-2">95%</div>
             <div className="text-gray-600">Job Placement Rate</div>
           </div>
         </div>
@@ -123,7 +123,7 @@ export default function AboutPage() {
               <CardContent className="text-center pt-6">
                 <div className="w-24 h-24 bg-gray-300 rounded-full mx-auto mb-4"></div>
                 <h3 className="text-xl font-semibold mb-2">Dr. Sarah Johnson</h3>
-                <p className="text-blue-600 mb-2">Chief Executive Officer</p>
+                <p className="text-[#FF804B] mb-2">Chief Executive Officer</p>
                 <p className="text-gray-600 text-sm">
                   Former Stanford professor with 15+ years in education technology.
                 </p>
@@ -134,7 +134,7 @@ export default function AboutPage() {
               <CardContent className="text-center pt-6">
                 <div className="w-24 h-24 bg-gray-300 rounded-full mx-auto mb-4"></div>
                 <h3 className="text-xl font-semibold mb-2">Michael Chen</h3>
-                <p className="text-blue-600 mb-2">Chief Technology Officer</p>
+                <p className="text-[#FF804B] mb-2">Chief Technology Officer</p>
                 <p className="text-gray-600 text-sm">
                   Ex-Google engineer passionate about scalable learning platforms.
                 </p>
@@ -145,7 +145,7 @@ export default function AboutPage() {
               <CardContent className="text-center pt-6">
                 <div className="w-24 h-24 bg-gray-300 rounded-full mx-auto mb-4"></div>
                 <h3 className="text-xl font-semibold mb-2">Emily Rodriguez</h3>
-                <p className="text-blue-600 mb-2">Head of Education</p>
+                <p className="text-[#FF804B] mb-2">Head of Education</p>
                 <p className="text-gray-600 text-sm">
                   Curriculum design expert with focus on student outcomes.
                 </p>
@@ -155,7 +155,7 @@ export default function AboutPage() {
         </div>
 
         {/* CTA */}
-        <div className="bg-blue-600 text-white rounded-lg p-12 text-center">
+        <div className="bg-gradient-to-r from-[#2C4E41] to-[#FF804B] text-white rounded-lg p-12 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Start Learning?</h2>
           <p className="text-xl mb-8">
             Join thousands of students who are already transforming their careers with Kalpla.
@@ -163,13 +163,13 @@ export default function AboutPage() {
           <div className="space-x-4">
             <a
               href="/auth/register"
-              className="inline-block bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              className="inline-block bg-white text-[#2C4E41] px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
             >
               Get Started Today
             </a>
             <a
               href="/courses"
-              className="inline-block border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors"
+              className="inline-block border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-[#2C4E41] transition-colors"
             >
               Browse Courses
             </a>

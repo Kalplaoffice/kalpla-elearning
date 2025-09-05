@@ -142,7 +142,7 @@ export default function FAQPage() {
             <input
               type="text"
               placeholder="Search FAQs..."
-              className="w-full px-6 py-4 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full px-6 py-4 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF804B] focus:border-transparent"
             />
           </div>
         </div>
