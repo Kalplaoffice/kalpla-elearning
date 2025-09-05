@@ -102,6 +102,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const signIn = async (email: string, password: string) => {
     setLoading(true);
     try {
+      // Check if user is already signed in
+      if (user) {
+        // If trying to sign in with the same user, just refresh the state
+        if (user.email === email) {
+          await checkAuthState();
+          return;
+        } else {
+          // If trying to sign in with a different user, sign out first
+          await signOut();
+        }
+      }
+
       const { isSignedIn, nextStep } = await amplifySignIn({
         username: email,
         password,
@@ -128,7 +140,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Provide more specific error messages
       const errorObj = error as { name?: string; message?: string };
-      if (errorObj.name === 'NotAuthorizedException') {
+      if (errorObj.name === 'UserAlreadyAuthenticatedException') {
+        // If user is already authenticated, refresh the auth state
+        await checkAuthState();
+        return;
+      } else if (errorObj.name === 'NotAuthorizedException') {
         throw new Error('Invalid email or password. Please check your credentials.');
       } else if (errorObj.name === 'UserNotConfirmedException') {
         throw new Error('Please check your email and confirm your account before signing in.');

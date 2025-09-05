@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
@@ -17,8 +17,27 @@ export default function LoginPage() {
   const [showResendConfirmation, setShowResendConfirmation] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
-  const { signIn, resendConfirmationCode } = useAuth();
+  const { signIn, resendConfirmationCode, isAuthenticated, user, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (!authLoading && isAuthenticated && user) {
+      router.push('/dashboard/student');
+    }
+  }, [isAuthenticated, user, router, authLoading]);
+
+  // Show loading while checking authentication
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#2C4E41] to-[#FF804B]">
+        <div className="text-center">
+          <div className="w-8 h-8 bg-white rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-white">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,11 +49,12 @@ export default function LoginPage() {
     try {
       await signIn(email, password);
       router.push('/dashboard/student');
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during sign in');
+    } catch (err: unknown) {
+      const errorObj = err as { message?: string };
+      setError(errorObj.message || 'An error occurred during sign in');
       
       // Show resend confirmation option if user needs to confirm email
-      if (err.message?.includes('confirm your account') || err.message?.includes('email and confirm')) {
+      if (errorObj.message?.includes('confirm your account') || errorObj.message?.includes('email and confirm')) {
         setShowResendConfirmation(true);
       }
     } finally {
@@ -54,8 +74,9 @@ export default function LoginPage() {
     try {
       await resendConfirmationCode(email);
       setResendMessage('Confirmation code sent! Please check your email.');
-    } catch (err: any) {
-      setResendMessage(err.message || 'Failed to send confirmation code');
+    } catch (err: unknown) {
+      const errorObj = err as { message?: string };
+      setResendMessage(errorObj.message || 'Failed to send confirmation code');
     } finally {
       setResendLoading(false);
     }
@@ -157,7 +178,7 @@ export default function LoginPage() {
 
             <div className="mt-6 text-center space-y-2">
               <p className="text-sm text-gray-600">
-                Don't have an account?{' '}
+                Don&apos;t have an account?{' '}
                 <Link 
                   href="/auth/register" 
                   className="font-medium text-[#2C4E41] hover:text-[#2C4E41]/80"
