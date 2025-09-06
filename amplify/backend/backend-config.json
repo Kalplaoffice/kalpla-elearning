@@ -33,13 +33,16 @@
         "signupAttributes": [
           "EMAIL"
         ],
-        "socialProviders": [],
+        "socialProviders": [
+          "GOOGLE"
+        ],
         "usernameAttributes": [
           "EMAIL",
           "PHONE_NUMBER"
         ],
         "verificationMechanisms": [
-          "EMAIL"
+          "EMAIL",
+          "PHONE_NUMBER"
         ]
       },
       "providerPlugin": "awscloudformation",

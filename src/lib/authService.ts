@@ -248,6 +248,91 @@ class AuthService {
     }
   }
 
+  public async signInWithPhone(phoneNumber: string): Promise<User> {
+    try {
+      // For phone number sign in, we need to use the phone number as username
+      const { isSignedIn, nextStep } = await amplifySignIn({
+        username: phoneNumber,
+        password: '', // Phone number sign in doesn't use password
+      });
+
+      if (isSignedIn) {
+        const user = await this.getCurrentUser();
+        if (!user) throw new Error('Failed to get user after sign in');
+        return user;
+      }
+
+      if (nextStep?.signInStep === 'CONFIRM_SIGN_UP') {
+        throw new Error('Please verify your phone number before signing in.');
+      } else if (nextStep?.signInStep === 'CONFIRM_SIGN_IN_WITH_SMS_CODE') {
+        throw new Error('SMS_CODE_REQUIRED');
+      } else {
+        throw new Error(`Sign in incomplete. Next step: ${nextStep?.signInStep || 'Unknown'}`);
+      }
+    } catch (error: any) {
+      console.error('Phone sign in error:', error);
+      throw this.handleAuthError(error);
+    }
+  }
+
+  public async signUpWithPhone(phoneNumber: string, name: string): Promise<void> {
+    try {
+      // Generate a temporary password for phone sign up
+      const tempPassword = Math.random().toString(36).slice(-8) + 'A1!';
+      
+      const { isSignUpComplete, userId, nextStep } = await amplifySignUp({
+        username: phoneNumber,
+        password: tempPassword,
+        options: {
+          userAttributes: {
+            phone_number: phoneNumber,
+            name,
+          },
+        },
+      });
+
+      if (isSignUpComplete) {
+        return;
+      }
+
+      if (nextStep?.signUpStep === 'CONFIRM_SIGN_UP') {
+        throw new Error('Please verify your phone number to complete registration.');
+      } else {
+        throw new Error(`Sign up incomplete. Next step: ${nextStep?.signUpStep || 'Unknown'}`);
+      }
+    } catch (error: any) {
+      console.error('Phone sign up error:', error);
+      throw this.handleAuthError(error);
+    }
+  }
+
+  public async confirmPhoneSignUp(phoneNumber: string, code: string): Promise<void> {
+    try {
+      const { isSignUpComplete } = await amplifyConfirmSignUp({
+        username: phoneNumber,
+        confirmationCode: code,
+      });
+
+      if (!isSignUpComplete) {
+        throw new Error('Phone verification failed');
+      }
+    } catch (error: any) {
+      console.error('Confirm phone sign up error:', error);
+      throw this.handleAuthError(error);
+    }
+  }
+
+  public async resendPhoneConfirmationCode(phoneNumber: string): Promise<void> {
+    try {
+      await amplifyResendSignUpCode({
+        username: phoneNumber,
+      });
+    } catch (error: any) {
+      console.error('Resend phone confirmation code error:', error);
+      throw this.handleAuthError(error);
+    }
+  }
+
   public async signOut(): Promise<void> {
     try {
       await amplifySignOut();

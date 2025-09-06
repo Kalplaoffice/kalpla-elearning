@@ -1,394 +1,242 @@
-# 🔐 Enhanced Authentication Setup Guide
+# Authentication Setup Guide
 
-This guide covers the comprehensive authentication system with multiple auth options, social login, MFA, and enterprise features.
+This guide covers the complete authentication setup for the Kalpla e-learning platform, including email, Google OAuth, and phone number authentication.
 
-## 🎯 **Authentication Features**
+## Features Implemented
 
-### **1. Multiple Authentication Methods**
-- ✅ **Email/Password Authentication**
-- ✅ **Social Login** (Google, GitHub, LinkedIn)
-- ✅ **Multi-Factor Authentication (MFA)**
-- ✅ **Password Reset & Recovery**
-- ✅ **Session Management**
-- ✅ **Remember Me Functionality**
+### 1. Email Authentication
+- ✅ User registration with email and password
+- ✅ User login with email and password
+- ✅ Email verification
+- ✅ Password reset functionality
+- ✅ Resend confirmation codes
 
-### **2. Security Features**
-- ✅ **Strong Password Policies**
-- ✅ **Email Verification**
-- ✅ **Account Lockout Protection**
-- ✅ **Session Timeout**
-- ✅ **Token Refresh**
-- ✅ **OAuth 2.0 / OpenID Connect**
+### 2. Google OAuth Authentication
+- ✅ Google OAuth integration
+- ✅ Redirect-based authentication flow
+- ✅ Automatic user profile creation
+- ✅ Seamless sign-in/sign-up experience
 
-### **3. User Experience**
-- ✅ **Unified Auth UI**
-- ✅ **Error Handling**
-- ✅ **Loading States**
-- ✅ **Responsive Design**
-- ✅ **Accessibility Support**
+### 3. Phone Number Authentication
+- ✅ Phone number registration
+- ✅ Phone number login
+- ✅ SMS verification (simulated)
+- ✅ International phone number support
+- ✅ Country code selection
 
-## 🛠️ **Setup Instructions**
+## Configuration Files Updated
 
-### **Step 1: AWS Cognito Configuration**
-
-#### **1.1 Create User Pool**
-```bash
-# Create user pool with enhanced settings
-aws cognito-idp create-user-pool \
-  --pool-name "KalplaUserPool" \
-  --policies '{
-    "PasswordPolicy": {
-      "MinimumLength": 8,
-      "RequireUppercase": true,
-      "RequireLowercase": true,
-      "RequireNumbers": true,
-      "RequireSymbols": true
-    }
-  }' \
-  --schema '[
-    {
-      "Name": "email",
-      "AttributeDataType": "String",
-      "Required": true,
-      "Mutable": true
-    },
-    {
-      "Name": "name",
-      "AttributeDataType": "String",
-      "Required": true,
-      "Mutable": true
-    }
-  ]' \
-  --auto-verified-attributes email \
-  --mfa-configuration OPTIONAL \
-  --mfa-configuration TOTP
-```
-
-#### **1.2 Create User Pool Client**
-```bash
-# Create app client with OAuth support
-aws cognito-idp create-user-pool-client \
-  --user-pool-id YOUR_USER_POOL_ID \
-  --client-name "KalplaWebClient" \
-  --generate-secret \
-  --explicit-auth-flows USER_PASSWORD_AUTH ALLOW_USER_SRP_AUTH ALLOW_REFRESH_TOKEN_AUTH \
-  --supported-identity-providers COGNITO Google GitHub LinkedIn \
-  --callback-urls "http://localhost:3000/auth/callback" "https://your-domain.com/auth/callback" \
-  --logout-urls "http://localhost:3000/auth/login" "https://your-domain.com/auth/login" \
-  --allowed-oauth-flows code \
-  --allowed-oauth-scopes email openid profile \
-  --allowed-oauth-flows-user-pool-client
-```
-
-### **Step 2: Social Provider Setup**
-
-#### **2.1 Google OAuth Setup**
-1. Go to [Google Cloud Console](https://console.cloud.google.com/)
-2. Create a new project or select existing
-3. Enable Google+ API
-4. Create OAuth 2.0 credentials
-5. Add authorized redirect URIs:
-   - `https://your-domain.auth.us-east-1.amazoncognito.com/oauth2/idpresponse`
-6. Copy Client ID and Secret
-
-#### **2.2 GitHub OAuth Setup**
-1. Go to [GitHub Developer Settings](https://github.com/settings/developers)
-2. Create new OAuth App
-3. Set Authorization callback URL:
-   - `https://your-domain.auth.us-east-1.amazoncognito.com/oauth2/idpresponse`
-4. Copy Client ID and Secret
-
-#### **2.3 LinkedIn OAuth Setup**
-1. Go to [LinkedIn Developers](https://www.linkedin.com/developers/)
-2. Create new app
-3. Add OAuth 2.0 redirect URL:
-   - `https://your-domain.auth.us-east-1.amazoncognito.com/oauth2/idpresponse`
-4. Copy Client ID and Secret
-
-### **Step 3: Environment Variables**
-
-Create `.env.local` file:
-```env
-# AWS Configuration
-NEXT_PUBLIC_AWS_REGION=us-east-1
-NEXT_PUBLIC_AWS_USER_POOL_ID=us-east-1_XXXXXXXXX
-NEXT_PUBLIC_AWS_USER_POOL_CLIENT_ID=your-client-id
-NEXT_PUBLIC_AWS_IDENTITY_POOL_ID=us-east-1:your-identity-pool-id
-
-# OAuth Configuration
-NEXT_PUBLIC_OAUTH_DOMAIN=your-domain.auth.us-east-1.amazoncognito.com
-NEXT_PUBLIC_REDIRECT_SIGN_IN=http://localhost:3000/auth/callback
-NEXT_PUBLIC_REDIRECT_SIGN_OUT=http://localhost:3000/auth/login
-NEXT_PUBLIC_REDIRECT_SIGN_IN_PROD=https://your-domain.com/auth/callback
-NEXT_PUBLIC_REDIRECT_SIGN_OUT_PROD=https://your-domain.com/auth/login
-
-# Social Provider Client IDs
-NEXT_PUBLIC_GOOGLE_CLIENT_ID=your-google-client-id
-NEXT_PUBLIC_GITHUB_CLIENT_ID=your-github-client-id
-NEXT_PUBLIC_LINKEDIN_CLIENT_ID=your-linkedin-client-id
-
-# API Configuration
-NEXT_PUBLIC_GRAPHQL_ENDPOINT=https://your-api-id.appsync-api.us-east-1.amazonaws.com/graphql
-
-# Storage Configuration
-NEXT_PUBLIC_S3_BUCKET=your-s3-bucket
-
-# Analytics (Optional)
-NEXT_PUBLIC_PINPOINT_APP_ID=your-pinpoint-app-id
-```
-
-### **Step 4: Cognito Identity Providers Setup**
-
-#### **4.1 Add Google Identity Provider**
-```bash
-aws cognito-idp create-identity-provider \
-  --user-pool-id YOUR_USER_POOL_ID \
-  --provider-name Google \
-  --provider-type Google \
-  --provider-details '{
-    "client_id": "your-google-client-id",
-    "client_secret": "your-google-client-secret",
-    "authorize_scopes": "email profile openid"
-  }' \
-  --attribute-mapping '{
-    "email": "email",
-    "name": "name",
-    "username": "sub"
-  }'
-```
-
-#### **4.2 Add GitHub Identity Provider**
-```bash
-aws cognito-idp create-identity-provider \
-  --user-pool-id YOUR_USER_POOL_ID \
-  --provider-name GitHub \
-  --provider-type GitHub \
-  --provider-details '{
-    "client_id": "your-github-client-id",
-    "client_secret": "your-github-client-secret",
-    "authorize_scopes": "user:email"
-  }' \
-  --attribute-mapping '{
-    "email": "email",
-    "name": "name",
-    "username": "id"
-  }'
-```
-
-#### **4.3 Add LinkedIn Identity Provider**
-```bash
-aws cognito-idp create-identity-provider \
-  --user-pool-id YOUR_USER_POOL_ID \
-  --provider-name LinkedIn \
-  --provider-type LinkedIn \
-  --provider-details '{
-    "client_id": "your-linkedin-client-id",
-    "client_secret": "your-linkedin-client-secret",
-    "authorize_scopes": "r_liteprofile r_emailaddress"
-  }' \
-  --attribute-mapping '{
-    "email": "email",
-    "name": "name",
-    "username": "id"
-  }'
-```
-
-## 🚀 **Usage Examples**
-
-### **1. Basic Email Authentication**
-```typescript
-import { useAuth } from '@/contexts/EnhancedAuthContext';
-
-function LoginComponent() {
-  const { signInWithEmail, signUpWithEmail, user, loading, error } = useAuth();
-
-  const handleSignIn = async (email: string, password: string) => {
-    try {
-      await signInWithEmail(email, password, true); // remember me
-    } catch (error) {
-      console.error('Sign in failed:', error);
-    }
-  };
-
-  return (
-    // Your UI components
-  );
-}
-```
-
-### **2. Social Authentication**
-```typescript
-import { useAuth } from '@/contexts/EnhancedAuthContext';
-
-function SocialLoginComponent() {
-  const { signInWithSocial } = useAuth();
-
-  const handleGoogleSignIn = async () => {
-    try {
-      await signInWithSocial('google');
-    } catch (error) {
-      console.error('Google sign in failed:', error);
-    }
-  };
-
-  return (
-    <button onClick={handleGoogleSignIn}>
-      Sign in with Google
-    </button>
-  );
-}
-```
-
-### **3. MFA Setup**
-```typescript
-import { useAuth } from '@/contexts/EnhancedAuthContext';
-
-function MFAComponent() {
-  const { enableMFA, verifyMFACode, user } = useAuth();
-
-  const handleEnableMFA = async () => {
-    try {
-      await enableMFA();
-      // Show QR code or setup instructions
-    } catch (error) {
-      console.error('MFA setup failed:', error);
-    }
-  };
-
-  const handleVerifyMFA = async (code: string) => {
-    try {
-      await verifyMFACode(code);
-    } catch (error) {
-      console.error('MFA verification failed:', error);
-    }
-  };
-
-  return (
-    // MFA setup UI
-  );
-}
-```
-
-## 🔧 **Advanced Configuration**
-
-### **1. Custom Password Policies**
-```typescript
-// In amplify-config-enhanced.ts
-passwordFormat: {
-  minLength: 12,
-  requireLowercase: true,
-  requireUppercase: true,
-  requireNumbers: true,
-  requireSpecialCharacters: true,
-  temporaryPasswordValidityDays: 7,
-}
-```
-
-### **2. Session Management**
-```typescript
-// Configure session timeouts
-session: {
-  refreshToken: {
-    expiresIn: 30, // days
+### 1. Amplify Configuration (`src/amplifyconfiguration.json`)
+```json
+{
+  "oauth": {
+    "domain": "kalpla-elearning.auth.ap-south-1.amazoncognito.com",
+    "scope": ["phone", "email", "openid", "profile", "aws.cognito.signin.user.admin"],
+    "redirectSignIn": "http://localhost:3000/auth/callback",
+    "redirectSignOut": "http://localhost:3000/auth/login",
+    "responseType": "code"
   },
-  accessToken: {
-    expiresIn: 1, // hour
-  },
-  idToken: {
-    expiresIn: 1, // hour
-  },
+  "aws_cognito_social_providers": ["GOOGLE"],
+  "aws_cognito_username_attributes": ["EMAIL", "PHONE_NUMBER"],
+  "aws_cognito_signup_attributes": ["EMAIL", "PHONE_NUMBER"],
+  "aws_cognito_verification_mechanisms": ["EMAIL", "PHONE_NUMBER"]
 }
 ```
 
-### **3. Custom Error Handling**
-```typescript
-// In authService.ts
-private handleAuthError(error: any): AuthError {
-  const errorMap = {
-    'UserAlreadyAuthenticatedException': 'You are already signed in.',
-    'NotAuthorizedException': 'Invalid credentials.',
-    'UserNotConfirmedException': 'Please verify your email.',
-    // Add more custom error messages
-  };
-  
-  return {
-    code: error.name || 'UnknownError',
-    message: errorMap[error.name] || error.message,
-    name: error.name || 'AuthError',
-  };
+### 2. Backend Configuration (`amplify/backend/backend-config.json`)
+```json
+{
+  "auth": {
+    "kalplaelearninga4785467": {
+      "frontendAuthConfig": {
+        "socialProviders": ["GOOGLE"],
+        "usernameAttributes": ["EMAIL", "PHONE_NUMBER"],
+        "verificationMechanisms": ["EMAIL", "PHONE_NUMBER"]
+      }
+    }
+  }
 }
 ```
 
-## 🧪 **Testing**
+## Components Created
 
-### **1. Test User Creation**
-```bash
-# Create test users with different roles
-npm run create-test-users
-```
+### 1. GoogleAuthButton (`src/components/auth/GoogleAuthButton.tsx`)
+- Reusable Google OAuth button component
+- Loading states and error handling
+- Customizable styling and content
 
-### **2. Social Login Testing**
-- Use test accounts for each provider
-- Test callback handling
-- Verify user data mapping
+### 2. PhoneAuthForm (`src/components/auth/PhoneAuthForm.tsx`)
+- Phone number input with international support
+- Verification code input
+- Support for both sign-in and sign-up modes
+- SMS verification simulation
 
-### **3. MFA Testing**
-- Enable MFA for test users
-- Test TOTP code verification
-- Test backup codes
+### 3. AuthCallback (`src/app/auth/callback/page.tsx`)
+- Handles OAuth redirects
+- Session validation
+- Automatic redirection to dashboard
 
-## 📱 **Mobile Support**
+## Authentication Context Updates
 
-The authentication system is fully responsive and works on:
-- ✅ Desktop browsers
-- ✅ Mobile browsers
-- ✅ Progressive Web Apps (PWA)
-- ✅ React Native (with Amplify)
-
-## 🔒 **Security Best Practices**
-
-1. **Environment Variables**: Never commit secrets to version control
-2. **HTTPS Only**: Always use HTTPS in production
-3. **Token Rotation**: Implement proper token refresh
-4. **Rate Limiting**: Configure rate limits in Cognito
-5. **Audit Logging**: Enable CloudTrail for audit logs
-6. **MFA Enforcement**: Require MFA for admin users
-7. **Session Management**: Implement proper session timeout
-
-## 🚨 **Troubleshooting**
-
-### **Common Issues**
-
-1. **OAuth Redirect Mismatch**
-   - Check callback URLs in Cognito
-   - Verify domain configuration
-
-2. **Social Login Not Working**
-   - Verify client IDs and secrets
-   - Check OAuth scopes
-
-3. **MFA Issues**
-   - Ensure TOTP is enabled in Cognito
-   - Check user MFA settings
-
-4. **Session Expiry**
-   - Configure proper token refresh
-   - Handle token refresh failures
-
-### **Debug Mode**
-Enable debug logging in development:
+### New Methods Added
 ```typescript
-// In amplify-config-enhanced.ts
-Amplify.Logger.LOG_LEVEL = 'DEBUG';
+interface AuthContextType {
+  // Existing methods...
+  signInWithGoogle: () => Promise<void>;
+  signInWithPhone: (phoneNumber: string) => Promise<void>;
+  signUpWithPhone: (phoneNumber: string, name: string) => Promise<void>;
+  confirmPhoneSignUp: (phoneNumber: string, code: string) => Promise<void>;
+  resendPhoneConfirmationCode: (phoneNumber: string) => Promise<void>;
+}
 ```
 
-## 📚 **Additional Resources**
+### User Interface Updates
+```typescript
+interface User {
+  // Existing properties...
+  phoneNumber?: string;
+  provider?: 'email' | 'google' | 'phone';
+}
+```
 
-- [AWS Cognito Documentation](https://docs.aws.amazon.com/cognito/)
-- [Amplify Auth Documentation](https://docs.amplify.aws/react/build-a-backend/auth/)
-- [OAuth 2.0 Specification](https://tools.ietf.org/html/rfc6749)
-- [OpenID Connect Specification](https://openid.net/connect/)
+## Pages Updated
 
----
+### 1. Login Page (`src/app/auth/login/page.tsx`)
+- Toggle between email and phone authentication
+- Google OAuth button
+- Phone number authentication form
+- Enhanced error handling
 
-This enhanced authentication system provides enterprise-grade security with multiple authentication options, making it suitable for both individual users and large organizations.
+### 2. Register Page (`src/app/auth/register/page.tsx`)
+- Toggle between email and phone authentication
+- Google OAuth button
+- Phone number registration form
+- Terms and conditions acceptance
+
+### 3. Test Page (`src/app/auth/test/page.tsx`)
+- Comprehensive testing interface
+- All authentication methods in one place
+- Real-time status updates
+- User information display
+
+## Dependencies Added
+
+```json
+{
+  "dependencies": {
+    "react-phone-number-input": "^3.x.x",
+    "libphonenumber-js": "^1.x.x"
+  }
+}
+```
+
+## Usage Examples
+
+### Email Authentication
+```typescript
+const { signIn, signUp } = useAuth();
+
+// Sign in
+await signIn('user@example.com', 'password123');
+
+// Sign up
+await signUp('user@example.com', 'password123', 'John Doe');
+```
+
+### Google Authentication
+```typescript
+const { signInWithGoogle } = useAuth();
+
+// Sign in with Google
+await signInWithGoogle();
+```
+
+### Phone Authentication
+```typescript
+const { signInWithPhone, signUpWithPhone } = useAuth();
+
+// Sign in with phone
+await signInWithPhone('+1234567890');
+
+// Sign up with phone
+await signUpWithPhone('+1234567890', 'John Doe');
+```
+
+## Testing
+
+### Test Page Access
+Visit `/auth/test` to test all authentication methods:
+- Email sign-in/sign-up
+- Google OAuth
+- Phone number sign-in/sign-up
+- User status display
+- Sign out functionality
+
+### Test Credentials
+For testing purposes, you can use:
+- **Email**: Any valid email format
+- **Password**: Minimum 8 characters
+- **Phone**: Any valid international format (e.g., +1234567890)
+
+## Security Considerations
+
+1. **Phone Number Validation**: Uses `libphonenumber-js` for proper validation
+2. **OAuth Security**: Proper redirect handling and state management
+3. **Password Policy**: Enforced through AWS Cognito
+4. **Session Management**: Automatic token refresh and validation
+5. **Error Handling**: Comprehensive error messages without exposing sensitive data
+
+## Deployment Notes
+
+### Environment Variables
+Make sure to set up the following in your production environment:
+- `NEXT_PUBLIC_AMPLIFY_CONFIG`: Amplify configuration
+- `GOOGLE_CLIENT_ID`: Google OAuth client ID
+- `GOOGLE_CLIENT_SECRET`: Google OAuth client secret
+
+### OAuth Redirect URLs
+Update the OAuth redirect URLs in your Google Console:
+- Development: `http://localhost:3000/auth/callback`
+- Production: `https://yourdomain.com/auth/callback`
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Google OAuth Not Working**
+   - Check OAuth configuration in AWS Cognito
+   - Verify redirect URLs in Google Console
+   - Ensure proper domain configuration
+
+2. **Phone Authentication Issues**
+   - Verify phone number format
+   - Check AWS Cognito phone number settings
+   - Ensure SMS service is properly configured
+
+3. **Session Management**
+   - Check token expiration settings
+   - Verify refresh token configuration
+   - Ensure proper error handling
+
+### Debug Mode
+Enable debug logging by setting:
+```typescript
+// In your auth configuration
+console.log('Auth debug enabled');
+```
+
+## Next Steps
+
+1. **SMS Integration**: Implement actual SMS sending for phone verification
+2. **MFA Support**: Add multi-factor authentication options
+3. **Social Providers**: Add more social login options (GitHub, LinkedIn)
+4. **Biometric Auth**: Add fingerprint/face ID support
+5. **SSO Integration**: Add enterprise SSO support
+
+## Support
+
+For issues or questions regarding authentication setup:
+1. Check the test page at `/auth/test`
+2. Review browser console for error messages
+3. Verify AWS Cognito configuration
+4. Check network requests in browser dev tools
